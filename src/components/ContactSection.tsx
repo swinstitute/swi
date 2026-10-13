@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, MapPin, Phone, MessageSquare, Mail, Compass, Send, CheckCircle2, User, Calendar, ArrowUpRight } from 'lucide-react';
+import { Sparkles, MapPin, Phone, MessageSquare, Mail, Send, CheckCircle2, ArrowUpRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { SiteContent } from '@/lib/types';
 import { addEnquiry } from '@/lib/cms-store';
@@ -196,7 +196,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                     <label className="block text-neutral-800 uppercase mb-1 font-bold">PROGRAM INTEREST</label>
                     <select
                       value={formData.course}
-                      onChange={(e) => setFormData({ ...formData, course: e.target.value as any })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          course: e.target.value as 'Fashion Design' | 'Interior Design' | 'Both / Not Sure',
+                        })
+                      }
                       className="w-full px-4 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#1749C6] focus:outline-none text-[#0B0B0D] font-medium"
                     >
                       <option value="Fashion Design">Diploma in Fashion Designing</option>

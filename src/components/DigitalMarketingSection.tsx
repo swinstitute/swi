@@ -19,7 +19,7 @@ const FacebookIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' 
   </svg>
 );
 
-export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = ({ content }) => {
+export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = () => {
   const tags = [
     { label: 'Instagram Growth', color: '#F20D63', textColor: '#FFFFFF', icon: InstagramIcon, pos: 'top-4 left-4 sm:-left-8' },
     { label: 'Facebook Ads', color: '#1749C6', textColor: '#FFFFFF', icon: FacebookIcon, pos: 'top-12 right-2 sm:-right-8' },
@@ -100,7 +100,7 @@ export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = ({ c
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tighter leading-[0.92] max-w-4xl mx-auto text-[#0B0B0D]"
         >
-          DON'T JUST DESIGN.{' '}
+          DON&apos;T JUST DESIGN.{' '}
           <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#F20D63] via-[#1749C6] to-[#0B0B0D]">
             LEARN TO MARKET IT.
           </span>

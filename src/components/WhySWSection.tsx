@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, Layers, Users, Briefcase, Rocket, Award } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 
-export const WhySWSection: React.FC<{ content?: SiteContent }> = ({ content }) => {
+export const WhySWSection: React.FC<{ content?: SiteContent }> = () => {
   const reasons = [
     {
       num: '01',

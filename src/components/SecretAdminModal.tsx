@@ -50,18 +50,32 @@ export const SecretAdminModal: React.FC = () => {
     };
   }, []);
 
-  const handleUnlock = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === 'swadmin2026' || passcode === 'admin' || passcode === 'studio') {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('sw_admin_auth', 'true');
+    if (!passcode) return;
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passcode }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsOpen(false);
+        setPasscode('');
+        router.push('/sw-studio');
+      } else {
+        setError(data?.error || 'Invalid Admin Passcode. Access Denied.');
       }
-      setIsOpen(false);
-      setPasscode('');
-      setError('');
-      router.push('/sw-studio');
-    } else {
-      setError('Invalid Passcode. Access Denied.');
+    } catch {
+      setError('Authentication failed. Please check network connection.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,9 +141,10 @@ export const SecretAdminModal: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#F20D63] to-[#1749C6] text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-pink-500/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              disabled={loading}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#F20D63] to-[#1749C6] text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-pink-500/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
-              <span>ACCESS STUDIO CMS</span>
+              <span>{loading ? 'VERIFYING...' : 'ACCESS STUDIO CMS'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>

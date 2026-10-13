@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, ArrowUpRight, Sparkles, Compass, ShieldCheck, Flame, Star, Award, Layers } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Sparkles, Compass, ShieldCheck, Flame, Star } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 
 interface HeroProps {
@@ -238,9 +238,12 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
               key={tag.label}
               animate={{
                 x: mousePos.x * (1 + idx * 0.2),
-                y: mousePos.y * (1 + idx * 0.2) + Math.sin(Date.now() / 1000 + idx) * 6,
+                y: [mousePos.y * (1 + idx * 0.2) - 4, mousePos.y * (1 + idx * 0.2) + 4, mousePos.y * (1 + idx * 0.2) - 4],
               }}
-              transition={{ type: 'spring', stiffness: 140, damping: 18 }}
+              transition={{
+                x: { type: 'spring', stiffness: 140, damping: 18 },
+                y: { duration: 3 + idx, repeat: Infinity, ease: 'easeInOut' },
+              }}
               className={`absolute ${tag.pos} z-30 px-5 py-2.5 rounded-full shadow-2xl border-2 border-[#0B0B0D] font-black text-[11px] uppercase tracking-wider flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform`}
               style={{ backgroundColor: tag.color, color: tag.textColor }}
             >

@@ -1,6 +1,6 @@
 /**
  * ImgBB Image Upload Service
- * Uploads images directly to ImgBB CDN and returns direct image URLs.
+ * Uploads images via secure server endpoint /api/upload (or direct fallback if key provided)
  */
 
 export interface ImgBBResponse {
@@ -15,13 +15,40 @@ export const uploadToImgBB = async (
   fileOrBase64: File | Blob | string,
   apiKey?: string
 ): Promise<ImgBBResponse> => {
+  // If in browser and no explicit apiKey override provided, use secure server route /api/upload
+  if (typeof window !== 'undefined' && !apiKey) {
+    try {
+      const serverFormData = new FormData();
+      if (typeof fileOrBase64 === 'string') {
+        serverFormData.append('image', fileOrBase64);
+      } else if (fileOrBase64 instanceof File) {
+        serverFormData.append('image', fileOrBase64);
+      } else {
+        serverFormData.append('image', fileOrBase64, 'upload.jpg');
+      }
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: serverFormData,
+      });
+
+      const serverData = await res.json();
+      if (res.ok && serverData.success) {
+        return serverData;
+      }
+      // If server route reports an error, fallback to client if key exists
+    } catch {
+      // Fallback
+    }
+  }
+
   try {
-    const key = apiKey || process.env.NEXT_PUBLIC_IMGBB_API_KEY || '07afc547f88e09e5ced81621fd89ddea';
+    const key = apiKey || process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 
     if (!key) {
       return {
         success: false,
-        error: 'No ImgBB API key found. Please configure your ImgBB API key in Studio CMS Settings.',
+        error: 'No ImgBB API key found. Please configure your ImgBB API key in server environment variables or Studio Settings.',
       };
     }
 
@@ -58,10 +85,11 @@ export const uploadToImgBB = async (
         error: data?.error?.message || 'Failed to upload image to ImgBB',
       };
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Network error occurred while uploading to ImgBB';
     return {
       success: false,
-      error: err?.message || 'Network error occurred while uploading to ImgBB',
+      error: message,
     };
   }
 };
@@ -108,9 +136,9 @@ export const syncImageToImgBB = async (
     }
 
     return { url: imageUrl, uploaded: false };
-  } catch (err: any) {
-    console.warn('Error syncing image to ImgBB:', err);
-    return { url: imageUrl, uploaded: false, error: err?.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error syncing image';
+    console.warn('Error syncing image to ImgBB:', message);
+    return { url: imageUrl, uploaded: false, error: message };
   }
 };
-

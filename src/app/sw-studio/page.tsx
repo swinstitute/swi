@@ -85,22 +85,24 @@ import {
   applySiteTheme,
 } from '@/lib/cms-store';
 
+type StudioTab =
+  | 'dashboard'
+  | 'enquiries'
+  | 'appearance'
+  | 'logos'
+  | 'section-reorder'
+  | 'section-content'
+  | 'courses'
+  | 'gallery'
+  | 'settings';
+
 export default function SWStudioAdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<
-    | 'dashboard'
-    | 'enquiries'
-    | 'appearance'
-    | 'logos'
-    | 'section-reorder'
-    | 'section-content'
-    | 'courses'
-    | 'gallery'
-    | 'settings'
-  >('dashboard');
+  const [activeTab, setActiveTab] = useState<StudioTab>('dashboard');
 
   const [livePreview, setLivePreview] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -113,7 +115,9 @@ export default function SWStudioAdminPage() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>(getStoredEnquiries());
 
   // Notification & Realtime Enquiry States
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() =>
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  );
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [newEnquiryToast, setNewEnquiryToast] = useState<Enquiry | null>(null);
   const [enquirySearch, setEnquirySearch] = useState('');
@@ -124,7 +128,7 @@ export default function SWStudioAdminPage() {
   const playNotificationChime = () => {
     if (typeof window === 'undefined') return;
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const now = ctx.currentTime;
@@ -274,9 +278,10 @@ export default function SWStudioAdminPage() {
         setFirebaseTestStatus('error');
         setFirebaseTestMessage('✕ Could not write to Firebase. Check API keys and Firestore security rules.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection failed';
       setFirebaseTestStatus('error');
-      setFirebaseTestMessage(`✕ Error: ${err?.message || 'Connection failed'}`);
+      setFirebaseTestMessage(`✕ Error: ${message}`);
     }
   };
 
@@ -293,9 +298,10 @@ export default function SWStudioAdminPage() {
         setImgbbTestStatus('error');
         setImgbbTestMessage(`✕ ImgBB Error: ${res.error || 'Failed to upload'}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
       setImgbbTestStatus('error');
-      setImgbbTestMessage(`✕ Error: ${err?.message || 'Upload failed'}`);
+      setImgbbTestMessage(`✕ Error: ${message}`);
     }
   };
 
@@ -428,26 +434,31 @@ export default function SWStudioAdminPage() {
         enquiriesSynced: firebaseRes.enquiriesCount,
       });
       setIsFullSyncing(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred during cloud sync';
       console.error('Full cloud sync error:', err);
       setIsFullSyncing(false);
       setFullSyncResult({
         success: false,
         imagesUploaded: 0,
         enquiriesSynced: 0,
-        error: err?.message || 'An error occurred during cloud sync',
+        error: message,
       });
     }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('sw_admin_auth');
-    if (token === 'authenticated') {
-      setIsAuthenticated(true);
-    }
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
+    // 1. Verify server-side admin authentication session
+    fetch('/api/admin/auth')
+      .then((res) => {
+        if (res.ok) {
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('sw_admin_auth');
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {});
 
     // Subscribe to Realtime Firestore Enquiries
     const unsubscribeEnquiries = subscribeToFirebaseEnquiries((remoteEnquiries) => {
@@ -489,18 +500,37 @@ export default function SWStudioAdminPage() {
     };
   }, [siteContent.firebaseConfig, soundEnabled, siteContent.logos?.brandSymbol]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === 'swadmin2026' || passcode === 'admin' || passcode === 'studio') {
-      setIsAuthenticated(true);
-      localStorage.setItem('sw_admin_auth', 'authenticated');
-      setAuthError('');
-    } else {
-      setAuthError('Invalid Admin Authorization Passcode. (Demo Key: swadmin2026)');
+    if (!passcode) return;
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passcode }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsAuthenticated(true);
+        localStorage.setItem('sw_admin_auth', 'authenticated');
+        setPasscode('');
+        setAuthError('');
+      } else {
+        setAuthError(data?.error || 'Invalid Admin Authorization Passcode.');
+      }
+    } catch {
+      setAuthError('Authentication request failed. Please check network.');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth', { method: 'DELETE' });
+    } catch {}
     setIsAuthenticated(false);
     localStorage.removeItem('sw_admin_auth');
   };
@@ -691,7 +721,7 @@ export default function SWStudioAdminPage() {
               <input
                 type="password"
                 required
-                placeholder="Enter passcode (Demo: swadmin2026)"
+                placeholder="Enter admin passcode..."
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 focus:border-[#F20D63] focus:outline-none text-white text-sm"
@@ -706,24 +736,11 @@ export default function SWStudioAdminPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-full bg-[#F20D63] text-white font-black text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-colors flex items-center justify-center gap-2 shadow-lg shadow-pink-600/30 cursor-pointer"
+              disabled={authLoading}
+              className="w-full py-3.5 rounded-full bg-[#F20D63] text-white font-black text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-colors flex items-center justify-center gap-2 shadow-lg shadow-pink-600/30 cursor-pointer disabled:opacity-60"
             >
-              <span>ACCESS STUDIO CMS</span>
+              <span>{authLoading ? 'VERIFYING CREDENTIALS...' : 'ACCESS STUDIO CMS'}</span>
             </button>
-
-            <div className="text-center pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setPasscode('swadmin2026');
-                  setIsAuthenticated(true);
-                  localStorage.setItem('sw_admin_auth', 'authenticated');
-                }}
-                className="text-[11px] text-[#FFB800] hover:underline font-mono cursor-pointer"
-              >
-                ⚡ Click for Quick Client Demo Login
-              </button>
-            </div>
           </form>
         </div>
       </div>
@@ -1040,7 +1057,7 @@ export default function SWStudioAdminPage() {
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as any)}
+              onClick={() => setActiveTab(item.id as StudioTab)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#F20D63] text-white shadow-md shadow-pink-600/30'
@@ -1083,7 +1100,7 @@ export default function SWStudioAdminPage() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
+                onClick={() => setActiveTab(item.id as StudioTab)}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#F20D63] text-white shadow-lg shadow-pink-600/30'
@@ -1689,7 +1706,7 @@ export default function SWStudioAdminPage() {
                         <div
                           key={t.mode}
                           onClick={() => {
-                            const updated = { ...siteContent, themeMode: t.mode as any };
+                            const updated = { ...siteContent, themeMode: t.mode as 'light' | 'dark' | 'auto' };
                             setSiteContent(updated);
                             applySiteTheme(updated);
                           }}
@@ -1731,7 +1748,7 @@ export default function SWStudioAdminPage() {
                       return (
                         <div
                           key={p.key}
-                          onClick={() => handleSelectPresetTheme(p.key as any)}
+                          onClick={() => handleSelectPresetTheme(p.key as ColorTheme['preset'])}
                           className={`cursor-pointer p-4 rounded-2xl border-2 transition-all space-y-3 ${
                             isSelected
                               ? 'bg-white/10 border-[#F20D63] text-white shadow-xl'
@@ -1950,7 +1967,7 @@ export default function SWStudioAdminPage() {
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => handleLogoFileUpload(logoItem.key as any, e)}
+                              onChange={(e) => handleLogoFileUpload(logoItem.key as keyof SiteLogos, e)}
                               className="w-full text-xs text-neutral-400 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#F20D63] file:text-white hover:file:bg-white hover:file:text-black cursor-pointer"
                             />
                           </div>
@@ -2196,7 +2213,7 @@ export default function SWStudioAdminPage() {
                         <label className="block text-neutral-300 uppercase mb-1">Category</label>
                         <select
                           value={newCourse.category}
-                          onChange={(e) => setNewCourse({ ...newCourse, category: e.target.value as any })}
+                          onChange={(e) => setNewCourse({ ...newCourse, category: e.target.value as 'Fashion' | 'Interior' })}
                           className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
                         >
                           <option value="Fashion">Fashion</option>
@@ -2285,7 +2302,7 @@ export default function SWStudioAdminPage() {
                   <div>
                     <h1 className="text-3xl font-black uppercase">STUDENT WORK & GALLERY</h1>
                     <p className="text-xs text-neutral-400 mt-1">
-                      Manage "Made at SW" editorial portfolio items.
+                      Manage &quot;Made at SW&quot; editorial portfolio items.
                     </p>
                   </div>
                   <button
@@ -2322,7 +2339,12 @@ export default function SWStudioAdminPage() {
                         <label className="block text-neutral-300 uppercase mb-1">Category</label>
                         <select
                           value={newGalleryItem.category}
-                          onChange={(e) => setNewGalleryItem({ ...newGalleryItem, category: e.target.value as any })}
+                          onChange={(e) =>
+                            setNewGalleryItem({
+                              ...newGalleryItem,
+                              category: e.target.value as GalleryItem['category'],
+                            })
+                          }
                           className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
                         >
                           <option value="Fashion">Fashion</option>

@@ -66,7 +66,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
               <span>{content.aboutTitle}</span>
             </div>
             <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight max-w-3xl leading-[0.95] text-[#0B0B0D]">
-              WE DON'T JUST TEACH DESIGN.{' '}
+              WE DON&apos;T JUST TEACH DESIGN.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F20D63] via-[#1749C6] to-[#0B0B0D]">
                 WE SHAPE CREATORS.
               </span>

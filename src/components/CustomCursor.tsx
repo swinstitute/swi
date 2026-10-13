@@ -30,9 +30,8 @@ export const CustomCursor: React.FC = () => {
       return;
     }
 
-    setIsVisible(true);
-
     const onMouseMove = (e: MouseEvent) => {
+      setIsVisible(true);
       setPosition({ x: e.clientX, y: e.clientY });
 
       const target = e.target as HTMLElement | null;

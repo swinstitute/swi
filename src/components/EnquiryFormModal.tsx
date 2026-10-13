@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, CheckCircle2, MessageSquare, Sparkles, User, Phone, Mail, HelpCircle, ShieldCheck, Compass, ArrowUpRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { addEnquiry } from '@/lib/cms-store';
+import { Enquiry } from '@/lib/types';
 
 interface EnquiryFormModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
   });
 
   const [submitted, setSubmitted] = useState(false);
-  const [lastCreated, setLastCreated] = useState<any>(null);
+  const [lastCreated, setLastCreated] = useState<Enquiry | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +135,7 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
                               setFormData({
                                 ...formData,
                                 enquiryTopic: item.label,
-                                course: item.val as any,
+                                course: item.val as 'Fashion Design' | 'Interior Design' | 'Both / Not Sure',
                               })
                             }
                             className={`cursor-pointer p-3 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between ${

@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp, FirebaseOptions } from 'firebase/app';
 import {
   getFirestore,
   doc,
@@ -7,12 +7,16 @@ import {
   deleteDoc,
   onSnapshot,
   collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
   Firestore,
 } from 'firebase/firestore';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+  Auth,
+} from 'firebase/auth';
 import { SiteContent, Course, GalleryItem, Enquiry, FirebaseSettings } from './types';
 
 // Default Firebase Configuration (Uses env vars or default fallback)
@@ -27,29 +31,69 @@ const defaultFirebaseConfig: FirebaseSettings = {
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
+let auth: Auth | null = null;
 
-export const initFirebase = (customConfig?: FirebaseSettings): { app: FirebaseApp | null; db: Firestore | null } => {
-  if (typeof window === 'undefined') return { app: null, db: null };
+export const initFirebase = (customConfig?: FirebaseSettings): {
+  app: FirebaseApp | null;
+  db: Firestore | null;
+  auth: Auth | null;
+} => {
+  if (typeof window === 'undefined') return { app: null, db: null, auth: null };
 
   const configToUse = customConfig && customConfig.projectId ? customConfig : defaultFirebaseConfig;
 
   if (!configToUse.projectId || !configToUse.apiKey) {
     console.warn('Firebase: Missing projectId or apiKey. Persistence running in local mode.');
-    return { app: null, db: null };
+    return { app: null, db: null, auth: null };
   }
 
   try {
     if (!getApps().length) {
-      app = initializeApp(configToUse as any);
+      app = initializeApp(configToUse as unknown as FirebaseOptions);
     } else {
       app = getApp();
     }
     db = getFirestore(app);
-    return { app, db };
+    auth = getAuth(app);
+    return { app, db, auth };
   } catch (error) {
     console.error('Firebase Initialization Error:', error);
-    return { app: null, db: null };
+    return { app: null, db: null, auth: null };
   }
+};
+
+export const getFirebaseAuth = (): Auth | null => {
+  const { auth: currentAuth } = initFirebase();
+  return currentAuth;
+};
+
+export const signInAdmin = async (email: string, pass: string): Promise<{ success: boolean; user?: User; error?: string }> => {
+  const currentAuth = getFirebaseAuth();
+  if (!currentAuth) return { success: false, error: 'Firebase Auth is not available' };
+  try {
+    const cred = await signInWithEmailAndPassword(currentAuth, email.trim(), pass);
+    return { success: true, user: cred.user };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to sign in to Firebase';
+    return { success: false, error: message };
+  }
+};
+
+export const signOutAdmin = async (): Promise<boolean> => {
+  const currentAuth = getFirebaseAuth();
+  if (!currentAuth) return false;
+  try {
+    await signOut(currentAuth);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const onAdminAuthStateChanged = (callback: (user: User | null) => void): (() => void) | null => {
+  const currentAuth = getFirebaseAuth();
+  if (!currentAuth) return null;
+  return onAuthStateChanged(currentAuth, callback);
 };
 
 /**
@@ -287,8 +331,9 @@ export const syncAllDataToFirebase = async (
     }
 
     return { success: true, enquiriesCount: count };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to sync all data to Firebase';
     console.error('Error in syncAllDataToFirebase:', err);
-    return { success: false, enquiriesCount: 0, error: err?.message || 'Failed to sync all data to Firebase' };
+    return { success: false, enquiriesCount: 0, error: message };
   }
 };

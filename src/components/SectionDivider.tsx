@@ -10,7 +10,6 @@ interface SectionDividerProps {
 
 export const SectionDivider: React.FC<SectionDividerProps> = ({
   label = 'SOUTH WEST INSTITUTE OF DESIGN & INNOVATION',
-  variant = 'badge',
 }) => {
   return (
     <div className="relative w-full py-8 bg-[#F8F7F3] flex items-center justify-center overflow-hidden select-none">

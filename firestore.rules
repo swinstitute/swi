@@ -1,0 +1,232 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: sw_site
+// Document ID: content | courses | gallery
+// Description: Global site metadata, course catalog, and student portfolio gallery.
+// Fields:
+//   - sw_site/content:
+//       - heroHeading, heroSubheading, tagline, announcement: string
+//       - heroTag1, heroTag2, heroTag3, heroImage1, heroImage2: string
+//       - aboutTitle, aboutHeadline, aboutStory: string
+//       - stat1Label, stat1Val, stat2Label, stat2Val: string
+//       - programsTitle, programsSubheading: string
+//       - dmTitle, dmHeadline, dmDescription: string
+//       - whySWTitle, whySWHeadline: string
+//       - contactPhone, contactWhatsapp, contactEmail, contactAddress: string
+//       - admissionsOpen: bool
+//       - academicYear: string
+//       - cursorStyle: string ('radial' | 'normal')
+//       - themeMode: string ('light' | 'dark' | 'auto')
+//       - colorTheme: map
+//       - logos: map
+//       - sectionOrder: list of maps
+//       - courses: list of maps (embedded courses, max 200 items)
+//       - gallery: list of maps (embedded gallery items, max 1000 items)
+//       - lastCloudSync: string (timestamp string, max 100 chars)
+//   - sw_site/courses:
+//       - list: list of course objects (max 200 items)
+//       - updatedAt: string
+//   - sw_site/gallery:
+//       - list: list of gallery objects (max 1000 items)
+//       - updatedAt: string
+//
+// Collection: enquiries
+// Document ID: enquiryId (string <= 100 chars, e.g. 'enq-1718293849102')
+// Description: Prospective student admission leads and contact queries (PII).
+// Fields:
+//   - id: string (optional in doc, matches enquiryId, max 100 chars, immutable)
+//   - name: string (required, 1-100 chars)
+//   - phone: string (required, 5-25 chars)
+//   - email: string (required, 0-100 chars, valid email format or empty)
+//   - age: string (required, 0-20 chars)
+//   - course: string (required, enum: 'Fashion Design' | 'Interior Design' | 'Both / Not Sure')
+//   - message: string (optional, 0-2000 chars)
+//   - timestamp: string (optional, 0-100 chars)
+//   - status: string (required, enum: 'New' | 'Contacted' | 'Enrolled' | 'Archived' | 'Closed', must be 'New' on unauthenticated create)
+//   - createdAt: string (optional, 0-100 chars, immutable)
+//   - syncedAt: string (optional, 0-100 chars)
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if client is authenticated via Firebase Auth
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Validate required fields exist in request payload
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate document contains only explicitly allowed fields (no schema pollution)
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate string field length
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+             request.resource.data[field].size() >= minLen &&
+             request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate optional string field length
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() >= minLen &&
+              request.resource.data[field].size() <= maxLen);
+    }
+
+    // Validate email format (allows empty string if omitted on frontend or valid email pattern)
+    function isValidEnquiryEmail(email) {
+      return email is string &&
+             email.size() <= 100 &&
+             (email == '' || email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"));
+    }
+
+    // Ensure specified fields are not modified during an update
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators (Used in both create and update)
+    // ===============================================================
+
+    // Validation for sw_site/content document
+    function isValidContentDoc() {
+      return request.resource.data is map &&
+             (!('courses' in request.resource.data) || (request.resource.data.courses is list && request.resource.data.courses.size() <= 200)) &&
+             (!('gallery' in request.resource.data) || (request.resource.data.gallery is list && request.resource.data.gallery.size() <= 1000)) &&
+             (!('sectionOrder' in request.resource.data) || (request.resource.data.sectionOrder is list && request.resource.data.sectionOrder.size() <= 50)) &&
+             isValidOptionalString('lastCloudSync', 0, 100);
+    }
+
+    // Validation for sw_site/courses document
+    function isValidCoursesDoc() {
+      return request.resource.data is map &&
+             hasRequiredFields(['list']) &&
+             request.resource.data.list is list &&
+             request.resource.data.list.size() <= 200 &&
+             isValidOptionalString('updatedAt', 0, 100);
+    }
+
+    // Validation for sw_site/gallery document
+    function isValidGalleryDoc() {
+      return request.resource.data is map &&
+             hasRequiredFields(['list']) &&
+             request.resource.data.list is list &&
+             request.resource.data.list.size() <= 1000 &&
+             isValidOptionalString('updatedAt', 0, 100);
+    }
+
+    // Validation router for sw_site documents
+    function isValidSiteDocument(docId) {
+      return (docId == 'content' && isValidContentDoc()) ||
+             (docId == 'courses' && isValidCoursesDoc()) ||
+             (docId == 'gallery' && isValidGalleryDoc());
+    }
+
+    // Allowed fields in an enquiry document
+    function isEnquirySchema() {
+      return hasOnlyAllowedFields([
+        'id',
+        'name',
+        'phone',
+        'email',
+        'age',
+        'course',
+        'message',
+        'timestamp',
+        'status',
+        'createdAt',
+        'syncedAt'
+      ]);
+    }
+
+    // Core domain validator for enquiry documents (called in BOTH create and update)
+    function isValidEnquiry(data) {
+      return isEnquirySchema() &&
+             hasRequiredFields(['name', 'phone', 'email', 'age', 'course', 'status']) &&
+             validStringLength('name', 1, 100) &&
+             validStringLength('phone', 5, 25) &&
+             isValidEnquiryEmail(data.email) &&
+             validStringLength('age', 0, 20) &&
+             data.course in ['Fashion Design', 'Interior Design', 'Both / Not Sure'] &&
+             isValidOptionalString('message', 0, 2000) &&
+             isValidOptionalString('timestamp', 0, 100) &&
+             isValidOptionalString('createdAt', 0, 100) &&
+             isValidOptionalString('syncedAt', 0, 100) &&
+             data.status in ['New', 'Contacted', 'Enrolled', 'Archived', 'Closed'];
+    }
+
+    // Creation validator for enquiries
+    function isValidEnquiryCreate(enquiryId) {
+      return enquiryId.size() > 0 && enquiryId.size() <= 100 &&
+             isValidEnquiry(request.resource.data) &&
+             (!('id' in request.resource.data) || request.resource.data.id == enquiryId) &&
+             (isAuthenticated() || request.resource.data.status == 'New');
+    }
+
+    // Update validator for enquiries
+    function isValidEnquiryUpdate() {
+      return isValidEnquiry(request.resource.data) &&
+             areImmutableFieldsUnchanged(['id', 'createdAt']);
+    }
+
+    // ===============================================================
+    // Root Level Default Deny
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // Public Site Content & Assets (sw_site)
+    // ===============================================================
+    match /sw_site/{docId} {
+      // Public visitors can view published site content, course offerings, and student gallery
+      allow read: if docId in ['content', 'courses', 'gallery'];
+
+      // Only authenticated staff/administrators can create or update site data
+      allow create, update: if isAuthenticated() &&
+                            docId in ['content', 'courses', 'gallery'] &&
+                            isValidSiteDocument(docId);
+
+      // Only authenticated administrators can delete site documents
+      allow delete: if isAuthenticated() &&
+                    docId in ['content', 'courses', 'gallery'];
+    }
+
+    // ===============================================================
+    // Student Enquiries & Leads (enquiries) - PII Protection
+    // ===============================================================
+    match /enquiries/{enquiryId} {
+      // Sensitive student PII is strictly protected: only authenticated staff can read/list
+      allow read: if isAuthenticated();
+
+      // Prospective students can submit enquiries publicly with strict validation;
+      // Authenticated staff can also ingest or sync enquiries
+      allow create: if isValidEnquiryCreate(enquiryId);
+
+      // Only authenticated staff can update enquiries (e.g. status changes);
+      // Domain validator is applied to eliminate update bypasses
+      allow update: if isAuthenticated() && isValidEnquiryUpdate();
+
+      // Only authenticated staff can delete enquiries
+      allow delete: if isAuthenticated();
+    }
+  }
+}

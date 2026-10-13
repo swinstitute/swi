@@ -5,7 +5,7 @@ import { getStoredContent } from '@/lib/cms-store';
 
 export const Footer: React.FC = () => {
   const [content, setContent] = useState(getStoredContent());
-  const [clickCount, setClickCount] = useState(0);
+  const clickCountRef = React.useRef(0);
 
   useEffect(() => {
     const handleUpdate = () => setContent(getStoredContent());
@@ -14,15 +14,15 @@ export const Footer: React.FC = () => {
   }, []);
 
   const handleSecretTripleClick = () => {
-    setClickCount((prev) => {
-      const next = prev + 1;
-      if (next >= 3) {
-        window.dispatchEvent(new Event('sw_open_studio_secret'));
-        return 0;
-      }
-      return next;
-    });
-    setTimeout(() => setClickCount(0), 1000);
+    clickCountRef.current += 1;
+    if (clickCountRef.current >= 3) {
+      window.dispatchEvent(new Event('sw_open_studio_secret'));
+      clickCountRef.current = 0;
+      return;
+    }
+    setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 1000);
   };
 
   return (
@@ -38,7 +38,7 @@ export const Footer: React.FC = () => {
               LEARN. CREATE. GROW. LEAD YOUR WORLD.
             </p>
             <p className="text-xs text-neutral-700 max-w-md font-medium leading-relaxed">
-              South West Institute of Design and Innovation is Bhilai's premier creative studio institute specializing in Fashion Designing, Interior Designing, and integrated Digital Marketing.
+              South West Institute of Design and Innovation is Bhilai&apos;s premier creative studio institute specializing in Fashion Designing, Interior Designing, and integrated Digital Marketing.
             </p>
           </div>
 

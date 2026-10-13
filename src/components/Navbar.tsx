@@ -29,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenEnquiry }) => {
   const [activeSection, setActiveSection] = useState('hero');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [content, setContent] = useState(getStoredContent());
-  const [logoClicks, setLogoClicks] = useState(0);
+  const logoClicksRef = React.useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,16 +62,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenEnquiry }) => {
     };
   }, []);
 
-  const handleLogoTripleTap = (e: React.MouseEvent) => {
-    setLogoClicks((prev) => {
-      const count = prev + 1;
-      if (count >= 3) {
-        window.dispatchEvent(new Event('sw_open_studio_secret'));
-        return 0;
-      }
-      return count;
-    });
-    setTimeout(() => setLogoClicks(0), 1000);
+  const handleLogoTripleTap = () => {
+    logoClicksRef.current += 1;
+    if (logoClicksRef.current >= 3) {
+      window.dispatchEvent(new Event('sw_open_studio_secret'));
+      logoClicksRef.current = 0;
+      return;
+    }
+    setTimeout(() => {
+      logoClicksRef.current = 0;
+    }, 1000);
   };
 
   const toggleThemeMode = () => {

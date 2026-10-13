@@ -98,10 +98,10 @@ export const FloorPlanBlueprintIllustration: React.FC<{ className?: string; colo
     <circle cx="65" cy="80" r="25" strokeDasharray="2 2" />
     <rect x="40" y="210" width="60" height="40" rx="4" />
     <text x="30" y="15" fill={color} fontSize="8" fontFamily="monospace" stroke="none">
-      LIVING ROOM // 24' x 18'
+      LIVING ROOM // 24&apos; x 18&apos;
     </text>
     <text x="130" y="15" fill={color} fontSize="8" fontFamily="monospace" stroke="none">
-      MASTER SUITE // 16' x 14'
+      MASTER SUITE // 16&apos; x 14&apos;
     </text>
   </motion.svg>
 );

@@ -24,6 +24,15 @@ const verifyToken = (token: string): boolean => {
   }
 };
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+]);
+
 /**
  * POST /api/upload - Secure admin image upload to ImgBB CDN
  */
@@ -36,11 +45,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
   }
 
-  // 2. Fetch server-side API Key
-  const apiKey = process.env.IMGBB_API_KEY || process.env.NEXT_PUBLIC_IMGBB_API_KEY || '07afc547f88e09e5ced81621fd89ddea';
+  // 2. Fetch server-side API Key (strictly server-side secret)
+  const apiKey = process.env.IMGBB_API_KEY;
 
   if (!apiKey) {
-    return NextResponse.json({ error: 'ImgBB API key is not configured on server' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'ImgBB API key is not configured on server (IMGBB_API_KEY environment variable missing)' },
+      { status: 500 }
+    );
   }
 
   try {
@@ -55,10 +67,26 @@ export async function POST(req: NextRequest) {
     imgbbFormData.append('key', apiKey);
 
     if (typeof image === 'string') {
-      const cleanBase64 = image.replace(/^data:image\/[a-z]+;base64,/, '');
+      // Base64 string payload
+      if (image.length > MAX_FILE_SIZE * 1.4) {
+        return NextResponse.json({ error: 'Image exceeds the maximum allowed size (10MB)' }, { status: 413 });
+      }
+      const cleanBase64 = image.replace(/^data:image\/[a-z+]+;base64,/, '');
       imgbbFormData.append('image', cleanBase64);
-    } else {
+    } else if (image instanceof Blob) {
+      // File or Blob payload
+      if (image.size > MAX_FILE_SIZE) {
+        return NextResponse.json({ error: 'Image exceeds the maximum allowed size (10MB)' }, { status: 413 });
+      }
+      if (image.type && !ALLOWED_MIME_TYPES.has(image.type)) {
+        return NextResponse.json(
+          { error: `Unsupported image format: ${image.type}. Allowed: JPEG, PNG, WebP, GIF, SVG.` },
+          { status: 400 }
+        );
+      }
       imgbbFormData.append('image', image);
+    } else {
+      return NextResponse.json({ error: 'Invalid image format received' }, { status: 400 });
     }
 
     const response = await fetch('https://api.imgbb.com/1/upload', {

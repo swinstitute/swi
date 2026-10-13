@@ -290,7 +290,7 @@ export default function SWStudioAdminPage() {
     setImgbbTestMessage('Testing ImgBB CDN API...');
     try {
       const testPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAA=';
-      const res = await uploadToImgBB(testPng, siteContent.imgbbApiKey);
+      const res = await uploadToImgBB(testPng);
       if (res.success && res.url) {
         setImgbbTestStatus('success');
         setImgbbTestMessage(`✓ ImgBB CDN upload verified! Image URL: ${res.url}`);
@@ -325,7 +325,6 @@ export default function SWStudioAdminPage() {
     setFullSyncStatusText('Initializing Cloud Engine & reading local media assets...');
 
     try {
-      const currentApiKey = siteContent.imgbbApiKey || process.env.NEXT_PUBLIC_IMGBB_API_KEY || '07afc547f88e09e5ced81621fd89ddea';
       let imagesUploaded = 0;
 
       // 1. Sync Logos
@@ -334,7 +333,7 @@ export default function SWStudioAdminPage() {
       const updatedLogos = { ...siteContent.logos };
       for (const key of ['headerLogo', 'mobileHeaderLogo', 'footerLogo', 'adminLogo', 'brandSymbol'] as const) {
         if (updatedLogos[key]) {
-          const res = await syncImageToImgBB(updatedLogos[key]!, currentApiKey);
+          const res = await syncImageToImgBB(updatedLogos[key]!);
           if (res.uploaded) {
             updatedLogos[key] = res.url;
             imagesUploaded++;
@@ -349,14 +348,14 @@ export default function SWStudioAdminPage() {
       let newHeroImage2 = siteContent.heroImage2;
 
       if (newHeroImage1) {
-        const res = await syncImageToImgBB(newHeroImage1, currentApiKey);
+        const res = await syncImageToImgBB(newHeroImage1);
         if (res.uploaded) {
           newHeroImage1 = res.url;
           imagesUploaded++;
         }
       }
       if (newHeroImage2) {
-        const res = await syncImageToImgBB(newHeroImage2, currentApiKey);
+        const res = await syncImageToImgBB(newHeroImage2);
         if (res.uploaded) {
           newHeroImage2 = res.url;
           imagesUploaded++;
@@ -369,7 +368,7 @@ export default function SWStudioAdminPage() {
       const updatedCourses = [...courses];
       for (let i = 0; i < updatedCourses.length; i++) {
         if (updatedCourses[i].image) {
-          const res = await syncImageToImgBB(updatedCourses[i].image, currentApiKey);
+          const res = await syncImageToImgBB(updatedCourses[i].image);
           if (res.uploaded) {
             updatedCourses[i] = { ...updatedCourses[i], image: res.url };
             imagesUploaded++;
@@ -383,7 +382,7 @@ export default function SWStudioAdminPage() {
       const updatedGallery = [...gallery];
       for (let i = 0; i < updatedGallery.length; i++) {
         if (updatedGallery[i].image) {
-          const res = await syncImageToImgBB(updatedGallery[i].image, currentApiKey);
+          const res = await syncImageToImgBB(updatedGallery[i].image);
           if (res.uploaded) {
             updatedGallery[i] = { ...updatedGallery[i], image: res.url };
             imagesUploaded++;
@@ -622,7 +621,7 @@ export default function SWStudioAdminPage() {
     if (!file) return;
 
     // Upload to ImgBB CDN
-    const imgbbRes = await uploadToImgBB(file, siteContent.imgbbApiKey);
+    const imgbbRes = await uploadToImgBB(file);
     if (imgbbRes.success && imgbbRes.url) {
       setSiteContent((prev) => ({
         ...prev,
@@ -2629,19 +2628,18 @@ export default function SWStudioAdminPage() {
                     </div>
                     <span className="self-start sm:self-center px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold uppercase tracking-widest border border-emerald-500/30 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      ACTIVE CDN KEY
+                      SECURE SERVER PROXY
                     </span>
                   </div>
 
-                  <div className="text-xs font-semibold">
-                    <label className="block text-neutral-400 uppercase mb-1">ImgBB API Key</label>
-                    <input
-                      type="text"
-                      value={siteContent.imgbbApiKey || ''}
-                      onChange={(e) => setSiteContent({ ...siteContent, imgbbApiKey: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white text-xs font-mono"
-                      placeholder="07afc547f88e09e5ced81621fd89ddea"
-                    />
+                  <div className="p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-neutral-400">Environment Variable:</span>
+                      <span className="font-mono text-emerald-400 text-[11px] bg-white/5 px-2 py-0.5 rounded border border-white/10">IMGBB_API_KEY (Server Secret)</span>
+                    </div>
+                    <p className="text-[11px] text-neutral-400 leading-relaxed">
+                      Image uploads are securely handled by the server endpoint <code className="text-[#00F0FF]">/api/upload</code> with session authentication, format validation, and 10MB limits. The secret key is never leaked to the browser.
+                    </p>
                   </div>
 
                   {imgbbTestMessage && (

@@ -1,6 +1,7 @@
 /**
  * ImgBB Image Upload Service
- * Uploads images via secure server endpoint /api/upload (or direct fallback if key provided)
+ * Securely uploads images via the server route /api/upload
+ * The ImgBB API Key is kept strictly server-side (IMGBB_API_KEY) and never exposed to the client.
  */
 
 export interface ImgBBResponse {
@@ -12,81 +13,46 @@ export interface ImgBBResponse {
 }
 
 export const uploadToImgBB = async (
-  fileOrBase64: File | Blob | string,
-  apiKey?: string
+  fileOrBase64: File | Blob | string
 ): Promise<ImgBBResponse> => {
-  // If in browser and no explicit apiKey override provided, use secure server route /api/upload
-  if (typeof window !== 'undefined' && !apiKey) {
-    try {
-      const serverFormData = new FormData();
-      if (typeof fileOrBase64 === 'string') {
-        serverFormData.append('image', fileOrBase64);
-      } else if (fileOrBase64 instanceof File) {
-        serverFormData.append('image', fileOrBase64);
-      } else {
-        serverFormData.append('image', fileOrBase64, 'upload.jpg');
-      }
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: serverFormData,
-      });
-
-      const serverData = await res.json();
-      if (res.ok && serverData.success) {
-        return serverData;
-      }
-      // If server route reports an error, fallback to client if key exists
-    } catch {
-      // Fallback
-    }
+  if (typeof window === 'undefined') {
+    return {
+      success: false,
+      error: 'Image uploads can only be initiated from the client.',
+    };
   }
 
   try {
-    const key = apiKey || process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-
-    if (!key) {
-      return {
-        success: false,
-        error: 'No ImgBB API key found. Please configure your ImgBB API key in server environment variables or Studio Settings.',
-      };
-    }
-
-    const formData = new FormData();
-    formData.append('key', key);
-
+    const serverFormData = new FormData();
     if (typeof fileOrBase64 === 'string') {
-      // Strips data URL prefix if present for clean base64 payload
-      const cleanBase64 = fileOrBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-      formData.append('image', cleanBase64);
+      serverFormData.append('image', fileOrBase64);
     } else if (fileOrBase64 instanceof File) {
-      formData.append('image', fileOrBase64);
+      serverFormData.append('image', fileOrBase64);
     } else {
-      formData.append('image', fileOrBase64, 'upload.jpg');
+      serverFormData.append('image', fileOrBase64, 'upload.jpg');
     }
 
-    const response = await fetch('https://api.imgbb.com/1/upload', {
+    const res = await fetch('/api/upload', {
       method: 'POST',
-      body: formData,
+      body: serverFormData,
     });
 
-    const data = await response.json();
-
-    if (data && data.success) {
+    const serverData = await res.json();
+    if (res.ok && serverData.success) {
       return {
         success: true,
-        url: data.data.url,
-        displayUrl: data.data.display_url || data.data.url,
-        deleteUrl: data.data.delete_url,
-      };
-    } else {
-      return {
-        success: false,
-        error: data?.error?.message || 'Failed to upload image to ImgBB',
+        url: serverData.url,
+        displayUrl: serverData.displayUrl || serverData.url,
+        deleteUrl: serverData.deleteUrl,
       };
     }
+
+    return {
+      success: false,
+      error: serverData.error || `Upload failed with status ${res.status}`,
+    };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Network error occurred while uploading to ImgBB';
+    const message = err instanceof Error ? err.message : 'Network error occurred during image upload';
     return {
       success: false,
       error: message,
@@ -99,8 +65,7 @@ export const uploadToImgBB = async (
  * If the image is already hosted on ImgBB CDN (e.g. ibb.co), returns original URL.
  */
 export const syncImageToImgBB = async (
-  imageUrl: string,
-  apiKey?: string
+  imageUrl: string
 ): Promise<{ url: string; uploaded: boolean; error?: string }> => {
   if (!imageUrl || imageUrl.trim() === '') {
     return { url: '', uploaded: false };
@@ -114,7 +79,7 @@ export const syncImageToImgBB = async (
   try {
     // If it's a Base64 Data URL
     if (imageUrl.startsWith('data:image/')) {
-      const res = await uploadToImgBB(imageUrl, apiKey);
+      const res = await uploadToImgBB(imageUrl);
       if (res.success && (res.displayUrl || res.url)) {
         return { url: res.displayUrl || res.url || imageUrl, uploaded: true };
       }
@@ -128,7 +93,7 @@ export const syncImageToImgBB = async (
         return { url: imageUrl, uploaded: false, error: `Failed to fetch image: ${response.statusText}` };
       }
       const blob = await response.blob();
-      const res = await uploadToImgBB(blob, apiKey);
+      const res = await uploadToImgBB(blob);
       if (res.success && (res.displayUrl || res.url)) {
         return { url: res.displayUrl || res.url || imageUrl, uploaded: true };
       }

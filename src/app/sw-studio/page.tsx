@@ -200,7 +200,7 @@ export default function SWStudioAdminPage() {
       }
     }
     setNewEnquiryToast({
-      id: `test-${Date.now()}`,
+      id: `SW-2026-${Math.floor(1000 + Math.random() * 9000)}`,
       name: 'Priya Sharma (Sample Live Test)',
       phone: '+91 99939 97767',
       email: 'priya.sharma@example.com',
@@ -215,7 +215,7 @@ export default function SWStudioAdminPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopyLead = (enq: Enquiry) => {
-    const text = `SW INSTITUTE LEAD:\nName: ${enq.name}\nPhone: ${enq.phone}\nCourse: ${enq.course}\nTime: ${enq.timestamp}\nQuery: ${enq.message || 'N/A'}`;
+    const text = `SW INSTITUTE LEAD #${enq.id}\nStudent: ${enq.name}\nPhone: ${enq.phone}\nAge: ${enq.age || 'N/A'}\nProgram: ${enq.course}\n${enq.email ? `Email: ${enq.email}\n` : ''}Submitted: ${enq.timestamp}\nQuery: ${enq.message || 'General Enquiry'}`;
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(text);
       setCopiedId(enq.id);
@@ -225,13 +225,13 @@ export default function SWStudioAdminPage() {
 
   const getForwardToAdminWhatsAppUrl = (enq: Enquiry) => {
     const adminPhone = (siteContent.contactWhatsapp || '917772992592').replace(/[^\d]/g, '');
-    const text = `🚨 *NEW ADMISSION LEAD — SW INSTITUTE*\n\n👤 *Student Name*: ${enq.name}\n📱 *Phone Number*: ${enq.phone}\n🎓 *Program*: ${enq.course}\n${enq.email ? `✉️ *Email*: ${enq.email}\n` : ''}${enq.age ? `🎂 *Age*: ${enq.age}\n` : ''}📅 *Submitted*: ${enq.timestamp}\n💬 *Student Query*: ${enq.message || 'General admission enquiry'}\n\n👉 *Status*: ${enq.status}`;
+    const text = `🚨 *NEW ADMISSION LEAD — SW INSTITUTE*\n🔖 *Reference*: #${enq.id}\n👤 *Student Name*: ${enq.name}\n📱 *Phone Number*: ${enq.phone}\n🎓 *Program*: ${enq.course}\n${enq.age ? `🎂 *Age*: ${enq.age} yrs\n` : ''}${enq.email ? `✉️ *Email*: ${enq.email}\n` : ''}📅 *Submitted*: ${enq.timestamp}\n💬 *Student Query*: ${enq.message || 'General admission enquiry'}\n\n👉 *Status*: ${enq.status}`;
     return `https://wa.me/${adminPhone}?text=${encodeURIComponent(text)}`;
   };
 
   const getStudentWhatsAppUrl = (enq: Enquiry) => {
     const cleanPhone = enq.phone.replace(/[^\d]/g, '');
-    const text = `Hello ${enq.name}! This is SW Institute regarding your admission enquiry for ${enq.course}. How can we assist you with syllabus, fee details, and batch timings?`;
+    const text = `Hello ${enq.name}! This is SW Institute regarding your admission enquiry (Ref: #${enq.id}) for ${enq.course}. How can we assist you with syllabus, fee details, and batch timings?`;
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
   };
 
@@ -459,7 +459,37 @@ export default function SWStudioAdminPage() {
       })
       .catch(() => {});
 
-    // Subscribe to Realtime Firestore Enquiries
+    // Helper to trigger chime, device notification, toast, and immediate list update
+    const notifyNewEnquiry = (enq: Enquiry) => {
+      if (!enq?.id) return;
+      if (seenEnquiryIdsRef.current.has(enq.id)) return;
+      seenEnquiryIdsRef.current.add(enq.id);
+
+      if (soundEnabled) {
+        playNotificationChime();
+      }
+
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(`🔔 New Lead [${enq.id}]: ${enq.name}`, {
+            body: `${enq.course} • Age: ${enq.age || 'N/A'} • Phone: ${enq.phone}`,
+            icon: siteContent.logos?.brandSymbol || '/icon.png',
+          });
+        } catch (e) {
+          console.warn('Device notification error:', e);
+        }
+      }
+
+      setNewEnquiryToast(enq);
+      setEnquiries((prev) => {
+        if (prev.some((item) => item.id === enq.id)) return prev;
+        const updated = [enq, ...prev];
+        saveStoredEnquiries(updated);
+        return updated;
+      });
+    };
+
+    // 1. Subscribe to Realtime Firestore Enquiries (Cross-device / cloud)
     const unsubscribeEnquiries = subscribeToFirebaseEnquiries((remoteEnquiries) => {
       if (remoteEnquiries) {
         if (isInitialEnquiryLoadRef.current) {
@@ -468,25 +498,10 @@ export default function SWStudioAdminPage() {
           setEnquiries(remoteEnquiries);
           saveStoredEnquiries(remoteEnquiries);
         } else {
-          // Detect brand new enquiries arriving live
+          // Detect brand new enquiries arriving live from cloud
           const newlyArrived = remoteEnquiries.filter((e) => !seenEnquiryIdsRef.current.has(e.id));
           if (newlyArrived.length > 0) {
-            const latest = newlyArrived[0];
-            if (soundEnabled) {
-              playNotificationChime();
-            }
-            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-              try {
-                new Notification(`🔔 New Enquiry: ${latest.name}`, {
-                  body: `${latest.course} • Phone: ${latest.phone}`,
-                  icon: siteContent.logos?.brandSymbol || '/icon.png',
-                });
-              } catch (e) {
-                console.warn('Device notification error:', e);
-              }
-            }
-            setNewEnquiryToast(latest);
-            newlyArrived.forEach((e) => seenEnquiryIdsRef.current.add(e.id));
+            newlyArrived.forEach((item) => notifyNewEnquiry(item));
           }
           setEnquiries(remoteEnquiries);
           saveStoredEnquiries(remoteEnquiries);
@@ -494,8 +509,36 @@ export default function SWStudioAdminPage() {
       }
     }, siteContent.firebaseConfig);
 
+    // 2. Local Same-Window Event (0ms instant response)
+    const handleLocalEnquiry = (e: Event) => {
+      const customEvent = e as CustomEvent<Enquiry>;
+      if (customEvent.detail) {
+        notifyNewEnquiry(customEvent.detail);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('sw_new_enquiry', handleLocalEnquiry);
+    }
+
+    // 3. Cross-Tab Broadcast Channel (0ms instant response across browser tabs)
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('sw_enquiries_channel');
+        channel.onmessage = (event) => {
+          if (event.data?.type === 'NEW_ENQUIRY' && event.data.enquiry) {
+            notifyNewEnquiry(event.data.enquiry);
+          }
+        };
+      }
+    } catch {}
+
     return () => {
       if (unsubscribeEnquiries) unsubscribeEnquiries();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('sw_new_enquiry', handleLocalEnquiry);
+      }
+      if (channel) channel.close();
     };
   }, [siteContent.firebaseConfig, soundEnabled, siteContent.logos?.brandSymbol]);
 
@@ -754,6 +797,8 @@ export default function SWStudioAdminPage() {
       enq.name.toLowerCase().includes(q) ||
       enq.phone.toLowerCase().includes(q) ||
       enq.course.toLowerCase().includes(q) ||
+      enq.id.toLowerCase().includes(q) ||
+      (enq.age && enq.age.toLowerCase().includes(q)) ||
       (enq.email && enq.email.toLowerCase().includes(q)) ||
       (enq.message && enq.message.toLowerCase().includes(q));
     const matchesStatus =
@@ -794,11 +839,19 @@ export default function SWStudioAdminPage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-base text-white">{newEnquiryToast.name}</h4>
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="font-bold text-base text-white">{newEnquiryToast.name}</h4>
+                <span className="font-mono text-xs font-bold text-white bg-white/10 px-2 py-0.5 rounded border border-white/15">
+                  #{newEnquiryToast.id}
+                </span>
+              </div>
               <p className="text-xs text-[#FFB800] font-mono mt-0.5">{newEnquiryToast.course}</p>
-              <p className="text-xs text-neutral-300 font-mono mt-0.5">{newEnquiryToast.phone}</p>
+              <div className="flex items-center gap-2.5 text-xs font-mono text-neutral-300 mt-0.5">
+                <span>{newEnquiryToast.phone}</span>
+                {newEnquiryToast.age && <span>• Age: {newEnquiryToast.age} yrs</span>}
+              </div>
               {newEnquiryToast.message && (
-                <p className="text-xs text-neutral-400 italic mt-1 line-clamp-2 bg-black/40 p-2 rounded-lg border border-white/5">
+                <p className="text-xs text-neutral-200 italic mt-1.5 line-clamp-2 bg-black/60 p-2 rounded-lg border border-white/10">
                   &quot;{newEnquiryToast.message}&quot;
                 </p>
               )}
@@ -1447,6 +1500,12 @@ export default function SWStudioAdminPage() {
                         {/* Lead Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
                           <div className="flex flex-wrap items-center gap-2.5">
+                            {/* Prominent Unique Enquiry Reference Badge */}
+                            <div className="px-3 py-1 rounded-xl bg-white/10 text-white font-mono text-xs font-black tracking-wider border border-white/20 flex items-center gap-1.5 shadow-sm">
+                              <span className="text-[#FFB800]">#</span>
+                              <span>{enq.id}</span>
+                            </div>
+
                             <span
                               className={`px-3 py-1 rounded-full text-[10px] font-mono uppercase font-black tracking-wider ${
                                 enq.status === 'New'
@@ -1471,18 +1530,18 @@ export default function SWStudioAdminPage() {
                             {/* Copy Lead Button */}
                             <button
                               onClick={() => handleCopyLead(enq)}
-                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white text-xs font-mono transition-colors flex items-center gap-1 cursor-pointer"
-                              title="Copy lead information"
+                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer border border-white/10"
+                              title="Copy full lead details"
                             >
                               {copiedId === enq.id ? (
                                 <>
                                   <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span className="text-emerald-400">COPIED</span>
+                                  <span className="text-emerald-400 font-bold">COPIED</span>
                                 </>
                               ) : (
                                 <>
                                   <Copy className="w-3.5 h-3.5" />
-                                  <span>COPY</span>
+                                  <span>COPY LEAD</span>
                                 </>
                               )}
                             </button>
@@ -1490,7 +1549,7 @@ export default function SWStudioAdminPage() {
                             {/* Delete Lead Button */}
                             <button
                               onClick={() => handleDeleteEnquiry(enq.id)}
-                              className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer border border-white/5"
                               title="Delete Enquiry"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1499,48 +1558,74 @@ export default function SWStudioAdminPage() {
                         </div>
 
                         {/* Lead Body Content */}
-                        <div className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                          <div className="md:col-span-4 space-y-1">
-                            <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider block">
-                              STUDENT NAME
-                            </span>
-                            <h3 className="text-xl font-black text-white">{enq.name}</h3>
-                            <a
-                              href={`tel:${enq.phone.replace(/\s+/g, '')}`}
-                              className="inline-flex items-center gap-1.5 font-mono text-sm text-[#00F0FF] hover:underline font-bold"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                              <span>{enq.phone}</span>
-                            </a>
-                            {enq.email && (
-                              <p className="text-xs text-neutral-400 flex items-center gap-1 truncate">
-                                <Mail className="w-3 h-3 text-neutral-500 shrink-0" />
-                                <span>{enq.email}</span>
-                              </p>
-                            )}
-                            {enq.age && (
-                              <p className="text-xs text-neutral-400">
-                                Age: <span className="text-white font-medium">{enq.age}</span>
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="md:col-span-8 space-y-2">
+                        <div className="py-4 grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+                          <div className="md:col-span-5 space-y-2">
                             <div>
                               <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider block">
-                                PROGRAM ENQUIRY
+                                STUDENT NAME & AGE
                               </span>
-                              <span className="inline-block px-3 py-1 rounded-xl bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30 font-bold text-xs mt-1">
-                                🎓 {enq.course}
-                              </span>
+                              <h3 className="text-xl font-black text-white flex items-center gap-2">
+                                <span>{enq.name}</span>
+                                {enq.age && (
+                                  <span className="px-2 py-0.5 rounded-md bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30 text-xs font-mono font-bold">
+                                    {enq.age} yrs
+                                  </span>
+                                )}
+                              </h3>
                             </div>
 
-                            {enq.message && (
-                              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5 text-xs text-neutral-300 leading-relaxed">
-                                <span className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
-                                  MESSAGE / QUESTION:
+                            <div className="space-y-1 pt-1">
+                              <a
+                                href={`tel:${enq.phone.replace(/\s+/g, '')}`}
+                                className="inline-flex items-center gap-1.5 font-mono text-sm text-[#00F0FF] hover:underline font-bold"
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>{enq.phone}</span>
+                              </a>
+                              {enq.email ? (
+                                <p className="text-xs text-neutral-300 flex items-center gap-1.5 truncate">
+                                  <Mail className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                                  <span>{enq.email}</span>
+                                </p>
+                              ) : (
+                                <p className="text-[11px] text-neutral-500 italic">No email provided</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="md:col-span-7 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider block">
+                                  PROGRAM ENQUIRY
                                 </span>
-                                &quot;{enq.message}&quot;
+                                <span className="inline-block px-3 py-1 rounded-xl bg-[#1749C6]/20 text-[#00F0FF] border border-[#1749C6]/40 font-bold text-xs mt-1">
+                                  🎓 {enq.course}
+                                </span>
+                              </div>
+
+                              <div className="text-right">
+                                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider block">
+                                  UNIQUE ENQUIRY NO
+                                </span>
+                                <span className="font-mono text-xs font-bold text-white bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 inline-block mt-1">
+                                  {enq.id}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Message Details Section */}
+                            {enq.message ? (
+                              <div className="p-3.5 rounded-2xl bg-black/60 border border-white/10 text-xs text-neutral-200 leading-relaxed shadow-inner">
+                                <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#F20D63] uppercase font-bold mb-1">
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  <span>STUDENT MESSAGE / QUERY DETAILS:</span>
+                                </div>
+                                <p className="italic text-white font-medium whitespace-pre-wrap">&quot;{enq.message}&quot;</p>
+                              </div>
+                            ) : (
+                              <div className="p-2.5 rounded-xl bg-white/5 border border-white/5 text-[11px] font-mono text-neutral-500 italic">
+                                No additional notes or custom message provided.
                               </div>
                             )}
                           </div>

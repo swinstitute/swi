@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, CheckCircle2, MessageSquare, Sparkles, User, Phone, Mail, HelpCircle, ShieldCheck, Compass, ArrowUpRight } from 'lucide-react';
+import { X, Send, CheckCircle2, MessageSquare, Sparkles, User, Phone, Mail, HelpCircle, ShieldCheck, Compass, ArrowUpRight, Copy, Check, Calendar } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { addEnquiry } from '@/lib/cms-store';
 import { Enquiry } from '@/lib/types';
@@ -30,6 +30,7 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
 
   const [submitted, setSubmitted] = useState(false);
   const [lastCreated, setLastCreated] = useState<Enquiry | null>(null);
+  const [copiedRef, setCopiedRef] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +56,18 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
     });
   };
 
+  const handleCopyRef = () => {
+    if (!lastCreated?.id) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(lastCreated.id);
+      setCopiedRef(true);
+      setTimeout(() => setCopiedRef(false), 2000);
+    }
+  };
+
   const resetAndClose = () => {
     setSubmitted(false);
+    setCopiedRef(false);
     setFormData({
       name: '',
       phone: '',
@@ -70,7 +81,8 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
   };
 
   const getWhatsAppUrl = () => {
-    const text = `Hello SW Institute! I submitted a quick studio enquiry:\n*Name*: ${formData.name}\n*Phone*: ${formData.phone}\n*Topic*: ${formData.enquiryTopic}\n*Question*: ${formData.message || 'General Information'}`;
+    const refTag = lastCreated?.id ? `[Ref: #${lastCreated.id}] ` : '';
+    const text = `Hello SW Institute! I submitted an admission enquiry ${refTag}\n• Name: ${formData.name}\n• Phone: ${formData.phone}\n• Age: ${formData.age || 'N/A'}\n• Program: ${formData.enquiryTopic}\n• Question: ${formData.message || 'General Information'}`;
     return `https://wa.me/917772992592?text=${encodeURIComponent(text)}`;
   };
 
@@ -89,7 +101,7 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-xl bg-white text-[#0B0B0D] rounded-3xl overflow-hidden shadow-2xl border-4 border-[#0B0B0D] p-5 sm:p-9 my-auto"
+            className="relative w-full max-w-xl bg-white text-[#0B0B0D] rounded-3xl overflow-hidden shadow-2xl border-4 border-[#0B0B0D] p-5 sm:p-8 my-auto"
           >
             <button
               onClick={resetAndClose}
@@ -101,12 +113,12 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
             {!submitted ? (
               <div>
                 {/* Form Header */}
-                <div className="mb-6">
-                  <div className="inline-flex items-center gap-2 text-xs font-mono text-[#F20D63] tracking-widest uppercase mb-2 font-bold">
+                <div className="mb-5">
+                  <div className="inline-flex items-center gap-2 text-xs font-mono text-[#F20D63] tracking-widest uppercase mb-1.5 font-bold">
                     <Sparkles className="w-4 h-4" />
                     <span>QUICK STUDIO ENQUIRY</span>
                   </div>
-                  <h3 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-[#0B0B0D]">
+                  <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#0B0B0D]">
                     HAVE A <span className="text-[#F20D63]">QUESTION?</span>
                   </h3>
                   <p className="text-xs text-neutral-600 mt-1 font-medium leading-relaxed">
@@ -114,13 +126,13 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
                   </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4 text-xs font-semibold">
+                <form onSubmit={handleSubmit} className="space-y-3.5 text-xs font-semibold">
                   {/* Topic Selection */}
                   <div>
-                    <label className="block text-[#0B0B0D] uppercase mb-2 font-black text-xs">
+                    <label className="block text-[#0B0B0D] uppercase mb-1.5 font-black text-xs">
                       WHAT WOULD YOU LIKE TO ENQUIRE ABOUT? *
                     </label>
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-2 gap-2">
                       {[
                         { label: 'Fashion Designing Program', color: '#F20D63', val: 'Fashion Design' },
                         { label: 'Interior Designing Program', color: '#1749C6', val: 'Interior Design' },
@@ -138,7 +150,7 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
                                 course: item.val as 'Fashion Design' | 'Interior Design' | 'Both / Not Sure',
                               })
                             }
-                            className={`cursor-pointer p-3 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between ${
+                            className={`cursor-pointer p-2.5 rounded-xl border-2 transition-all duration-300 flex items-center justify-between ${
                               isSelected
                                 ? 'bg-[#0B0B0D] text-white border-[#0B0B0D] shadow-md'
                                 : 'bg-[#F8F7F3] text-[#0B0B0D] border-neutral-200 hover:border-neutral-400'
@@ -155,8 +167,8 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Personal Contact Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                  {/* Personal Contact Details: Name & Phone */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-[#F20D63]" />
@@ -168,7 +180,7 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
                         placeholder="e.g. Ananya Deshmukh"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] text-sm font-medium"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] text-sm font-medium"
                       />
                     </div>
 
@@ -183,53 +195,71 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
                         placeholder="e.g. +91 99939 97767"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#1749C6] focus:outline-none text-[#0B0B0D] text-sm font-medium"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#1749C6] focus:outline-none text-[#0B0B0D] text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Student Age & Email */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#FFB800]" />
+                        APPLICANT AGE *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 19 or 22"
+                        value={formData.age}
+                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#FFB800] focus:outline-none text-[#0B0B0D] text-sm font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-neutral-500" />
+                        EMAIL ADDRESS (OPTIONAL)
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="ananya@example.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#0B0B0D] focus:outline-none text-[#0B0B0D] text-sm font-medium"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-neutral-500" />
-                      EMAIL ADDRESS (OPTIONAL)
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="ananya@example.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#0B0B0D] focus:outline-none text-[#0B0B0D] text-sm font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
-                      <HelpCircle className="w-3.5 h-3.5 text-[#FFB800]" />
+                      <HelpCircle className="w-3.5 h-3.5 text-[#F20D63]" />
                       YOUR QUESTION / MESSAGE (OPTIONAL)
                     </label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       placeholder="e.g. Can I schedule a campus visit for this Saturday? What are the fee payment options?"
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] text-sm font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border-2 border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] text-sm font-medium"
                     />
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <button
                       type="submit"
                       data-cursor="ENQUIRE"
-                      className="w-full py-4 rounded-full bg-[#0B0B0D] text-white font-black text-xs uppercase tracking-widest hover:bg-[#F20D63] transition-all duration-300 flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95"
+                      className="w-full py-3.5 rounded-full bg-[#0B0B0D] text-white font-black text-xs uppercase tracking-widest hover:bg-[#F20D63] transition-all duration-300 flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95"
                     >
                       <Send className="w-4 h-4" />
                       <span>SUBMIT ENQUIRY</span>
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-center gap-4 text-[10px] font-mono text-neutral-500 pt-1">
+                  <div className="flex items-center justify-center gap-4 text-[10px] font-mono text-neutral-500 pt-0.5">
                     <span className="flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-[#F20D63]" /> Quick Callback
+                      <ShieldCheck className="w-3 h-3 text-[#F20D63]" /> Instant CMS Reflection
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
@@ -240,47 +270,76 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
               </div>
             ) : (
               /* SUBMISSION CONFIRMATION SCREEN */
-              <div className="text-center py-6 space-y-6">
-                <div className="w-16 h-16 rounded-full bg-[#F20D63] text-white flex items-center justify-center mx-auto shadow-xl shadow-pink-500/30">
-                  <CheckCircle2 className="w-10 h-10" />
+              <div className="text-center py-4 space-y-4">
+                <div className="w-14 h-14 rounded-full bg-[#F20D63] text-white flex items-center justify-center mx-auto shadow-xl shadow-pink-500/30">
+                  <CheckCircle2 className="w-8 h-8" />
                 </div>
 
                 <div>
-                  <h3 className="text-3xl font-black uppercase text-[#0B0B0D]">
+                  <h3 className="text-2xl sm:text-3xl font-black uppercase text-[#0B0B0D]">
                     ENQUIRY RECEIVED!
                   </h3>
-                  <p className="text-sm text-neutral-700 max-w-md mx-auto mt-2 font-medium leading-relaxed">
-                    Thank you, <span className="text-[#0B0B0D] font-bold">{formData.name}</span>! Our studio team will get back to you shortly on{' '}
-                    <span className="text-[#F20D63] font-mono font-bold">{formData.phone}</span>.
+                  <p className="text-xs text-neutral-700 max-w-md mx-auto mt-1 font-medium leading-relaxed">
+                    Thank you, <span className="text-[#0B0B0D] font-bold">{formData.name}</span>! Your enquiry has been registered at SW Studio.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-[#F8F7F3] border-2 border-neutral-200 max-w-md mx-auto text-left text-xs space-y-2.5 font-medium">
+                <div className="p-4 rounded-2xl bg-[#F8F7F3] border-2 border-neutral-200 max-w-md mx-auto text-left text-xs space-y-2 font-medium">
+                  <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                    <span className="text-neutral-500 font-mono">UNIQUE ENQUIRY NO:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-sm text-[#1749C6] font-black tracking-wider">
+                        {lastCreated?.id}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCopyRef}
+                        className="px-2 py-0.5 rounded-md bg-white border border-neutral-300 hover:bg-neutral-100 text-[#0B0B0D] text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Copy Unique Enquiry Number"
+                      >
+                        {copiedRef ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-600">COPIED</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>COPY</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex justify-between border-b border-neutral-200 pb-2">
-                    <span className="text-neutral-500 font-mono">ENQUIRY TOPIC:</span>
+                    <span className="text-neutral-500 font-mono">PROGRAM / TOPIC:</span>
                     <span className="font-bold text-[#F20D63]">{formData.enquiryTopic}</span>
                   </div>
+                  <div className="flex justify-between border-b border-neutral-200 pb-2">
+                    <span className="text-neutral-500 font-mono">APPLICANT AGE:</span>
+                    <span className="font-bold text-[#0B0B0D]">{formData.age || 'N/A'} yrs</span>
+                  </div>
                   <div className="flex justify-between">
-                    <span className="text-neutral-500 font-mono">REFERENCE ID:</span>
-                    <span className="font-mono text-[#1749C6] font-bold">{lastCreated?.id}</span>
+                    <span className="text-neutral-500 font-mono">CALLBACK PHONE:</span>
+                    <span className="font-mono text-[#0B0B0D] font-bold">{formData.phone}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
                   <a
                     href={getWhatsAppUrl()}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#25D366] text-white font-bold text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 hover:bg-[#0B0B0D] transition-colors shadow-lg shadow-emerald-500/25 whitespace-nowrap active:scale-95 cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-3 rounded-full bg-[#25D366] text-white font-bold text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 hover:bg-[#0B0B0D] transition-colors shadow-lg shadow-emerald-500/25 whitespace-nowrap active:scale-95 cursor-pointer"
                   >
                     <MessageSquare className="w-4 h-4 shrink-0" />
-                    <span>CHAT ON WHATSAPP</span>
+                    <span>CHAT ON WHATSAPP (WITH REF ID)</span>
                     <ArrowUpRight className="w-4 h-4 shrink-0" />
                   </a>
 
                   <button
                     onClick={resetAndClose}
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#0B0B0D] text-white font-bold text-xs uppercase hover:bg-[#F20D63] transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                    className="w-full sm:w-auto px-5 py-3 rounded-full bg-[#0B0B0D] text-white font-bold text-xs uppercase hover:bg-[#F20D63] transition-colors cursor-pointer whitespace-nowrap active:scale-95"
                   >
                     CLOSE
                   </button>

@@ -237,7 +237,7 @@ export const INITIAL_GALLERY: GalleryItem[] = [
 
 export const INITIAL_ENQUIRIES: Enquiry[] = [
   {
-    id: 'enq-1',
+    id: 'SW-2026-4891',
     name: 'Ananya Deshmukh',
     phone: '+91 98230 11223',
     email: 'ananya.d@gmail.com',
@@ -248,7 +248,7 @@ export const INITIAL_ENQUIRIES: Enquiry[] = [
     status: 'New',
   },
   {
-    id: 'enq-2',
+    id: 'SW-2026-3829',
     name: 'Rajesh Kumar',
     phone: '+91 97555 44321',
     email: 'rajesh.k@yahoo.com',
@@ -259,7 +259,7 @@ export const INITIAL_ENQUIRIES: Enquiry[] = [
     status: 'Contacted',
   },
   {
-    id: 'enq-3',
+    id: 'SW-2026-7124',
     name: 'Megha Singh',
     phone: '+91 88190 99887',
     email: 'megha.singh@gmail.com',
@@ -402,9 +402,16 @@ export const saveStoredEnquiries = (enquiries: Enquiry[]) => {
 export const addEnquiry = (newEnquiry: Omit<Enquiry, 'id' | 'timestamp' | 'status'>): Enquiry => {
   const enquiries = getStoredEnquiries();
   const content = getStoredContent();
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
   const created: Enquiry = {
     ...newEnquiry,
-    id: `enq-${Date.now()}`,
+    id: `SW-2026-${randomNum}`,
+    name: (newEnquiry.name || '').trim(),
+    phone: (newEnquiry.phone || '').trim(),
+    email: (newEnquiry.email || '').trim(),
+    age: (newEnquiry.age || '').trim(),
+    course: newEnquiry.course || 'Both / Not Sure',
+    message: (newEnquiry.message || '').trim(),
     timestamp: new Date().toLocaleString('en-IN', {
       dateStyle: 'medium',
       timeStyle: 'short',
@@ -413,6 +420,21 @@ export const addEnquiry = (newEnquiry: Omit<Enquiry, 'id' | 'timestamp' | 'statu
   };
   const updated = [created, ...enquiries];
   saveStoredEnquiries(updated);
+
+  if (typeof window !== 'undefined') {
+    // 0ms instant notification for current window / components
+    window.dispatchEvent(new CustomEvent('sw_new_enquiry', { detail: created }));
+
+    // 0ms instant notification for other open tabs (e.g. SW Studio open in another tab)
+    try {
+      if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('sw_enquiries_channel');
+        channel.postMessage({ type: 'NEW_ENQUIRY', enquiry: created });
+        channel.close();
+      }
+    } catch {}
+  }
+
   // Fire-and-forget Firebase enquiry sync
   saveEnquiryToFirebase(created, content.firebaseConfig);
   return created;

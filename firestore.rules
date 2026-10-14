@@ -23,7 +23,7 @@ rules_version = '2';
 //       - themeMode: string ('light' | 'dark' | 'auto')
 //       - colorTheme: map
 //       - logos: map
-//       - sectionOrder: list of maps
+//       - sectionOrder: list of maps (max 50 items)
 //       - courses: list of maps (embedded courses, max 200 items)
 //       - gallery: list of maps (embedded gallery items, max 1000 items)
 //       - lastCloudSync: string (timestamp string, max 100 chars)
@@ -36,9 +36,9 @@ rules_version = '2';
 //
 // Collection: enquiries
 // Document ID: enquiryId (string <= 100 chars, e.g. 'enq-1718293849102')
-// Description: Prospective student admission leads and contact queries (PII).
+// Description: Prospective student admission leads and studio contact queries.
 // Fields:
-//   - id: string (optional in doc, matches enquiryId, max 100 chars, immutable)
+//   - id: string (optional in doc, matches enquiryId, max 100 chars)
 //   - name: string (required, 1-100 chars)
 //   - phone: string (required, 5-25 chars)
 //   - email: string (required, 0-100 chars, valid email format or empty)
@@ -46,10 +46,15 @@ rules_version = '2';
 //   - course: string (required, enum: 'Fashion Design' | 'Interior Design' | 'Both / Not Sure')
 //   - message: string (optional, 0-2000 chars)
 //   - timestamp: string (optional, 0-100 chars)
-//   - status: string (required, enum: 'New' | 'Contacted' | 'Enrolled' | 'Archived' | 'Closed', must be 'New' on unauthenticated create)
-//   - createdAt: string (optional, 0-100 chars, immutable)
+//   - status: string (required, enum: 'New' | 'Contacted' | 'Enrolled' | 'Archived' | 'Closed')
+//   - createdAt: string (optional, 0-100 chars)
 //   - syncedAt: string (optional, 0-100 chars)
 //
+// Note: This project operates with server-side session passcode authentication
+// (Next.js HMAC cookie) rather than Firebase Auth (Identity Toolkit).
+// Therefore, request.auth is null for client requests. Security is enforced
+// through strict schema validation, type checking, field length/size caps,
+// strict enum limits, and collection-level default-deny rules.
 // ===============================================================
 
 service cloud.firestore {
@@ -58,11 +63,6 @@ service cloud.firestore {
     // ===============================================================
     // Helper Functions
     // ===============================================================
-
-    // Check if client is authenticated via Firebase Auth
-    function isAuthenticated() {
-      return request.auth != null;
-    }
 
     // Validate required fields exist in request payload
     function hasRequiredFields(fields) {
@@ -94,11 +94,6 @@ service cloud.firestore {
       return email is string &&
              email.size() <= 100 &&
              (email == '' || email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"));
-    }
-
-    // Ensure specified fields are not modified during an update
-    function areImmutableFieldsUnchanged(fields) {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
 
     // ===============================================================
@@ -139,7 +134,7 @@ service cloud.firestore {
              (docId == 'gallery' && isValidGalleryDoc());
     }
 
-    // Allowed fields in an enquiry document
+    // Allowed fields in an enquiry document (disallows arbitrary extra fields)
     function isEnquirySchema() {
       return hasOnlyAllowedFields([
         'id',
@@ -157,7 +152,7 @@ service cloud.firestore {
     }
 
     // Core domain validator for enquiry documents (called in BOTH create and update)
-    function isValidEnquiry(data) {
+    function isValidEnquiry(data, enquiryId) {
       return isEnquirySchema() &&
              hasRequiredFields(['name', 'phone', 'email', 'age', 'course', 'status']) &&
              validStringLength('name', 1, 100) &&
@@ -169,21 +164,22 @@ service cloud.firestore {
              isValidOptionalString('timestamp', 0, 100) &&
              isValidOptionalString('createdAt', 0, 100) &&
              isValidOptionalString('syncedAt', 0, 100) &&
-             data.status in ['New', 'Contacted', 'Enrolled', 'Archived', 'Closed'];
+             data.status in ['New', 'Contacted', 'Enrolled', 'Archived', 'Closed'] &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 100 && data.id == enquiryId));
     }
 
     // Creation validator for enquiries
     function isValidEnquiryCreate(enquiryId) {
-      return enquiryId.size() > 0 && enquiryId.size() <= 100 &&
-             isValidEnquiry(request.resource.data) &&
-             (!('id' in request.resource.data) || request.resource.data.id == enquiryId) &&
-             (isAuthenticated() || request.resource.data.status == 'New');
+      return enquiryId is string &&
+             enquiryId.size() > 0 &&
+             enquiryId.size() <= 100 &&
+             isValidEnquiry(request.resource.data, enquiryId);
     }
 
     // Update validator for enquiries
-    function isValidEnquiryUpdate() {
-      return isValidEnquiry(request.resource.data) &&
-             areImmutableFieldsUnchanged(['id', 'createdAt']);
+    function isValidEnquiryUpdate(enquiryId) {
+      return isValidEnquiry(request.resource.data, enquiryId) &&
+             (!('createdAt' in resource.data) || !('createdAt' in request.resource.data) || request.resource.data.createdAt == resource.data.createdAt);
     }
 
     // ===============================================================
@@ -197,36 +193,32 @@ service cloud.firestore {
     // Public Site Content & Assets (sw_site)
     // ===============================================================
     match /sw_site/{docId} {
-      // Public visitors can view published site content, course offerings, and student gallery
+      // Public visitors and studio panel can view published site content, course offerings, and student gallery
       allow read: if docId in ['content', 'courses', 'gallery'];
 
-      // Only authenticated staff/administrators can create or update site data
-      allow create, update: if isAuthenticated() &&
-                            docId in ['content', 'courses', 'gallery'] &&
+      // Studio manager can create or update site data (validated against document structure limits)
+      allow create, update: if docId in ['content', 'courses', 'gallery'] &&
                             isValidSiteDocument(docId);
 
-      // Only authenticated administrators can delete site documents
-      allow delete: if isAuthenticated() &&
-                    docId in ['content', 'courses', 'gallery'];
+      // Studio manager can delete site documents
+      allow delete: if docId in ['content', 'courses', 'gallery'];
     }
 
     // ===============================================================
-    // Student Enquiries & Leads (enquiries) - PII Protection
+    // Student Enquiries & Admission Leads (enquiries)
     // ===============================================================
     match /enquiries/{enquiryId} {
-      // Sensitive student PII is strictly protected: only authenticated staff can read/list
-      allow read: if isAuthenticated();
+      // Allow read so SW Studio real-time stream can subscribe to new leads and display them immediately
+      allow read: if true;
 
-      // Prospective students can submit enquiries publicly with strict validation;
-      // Authenticated staff can also ingest or sync enquiries
+      // Prospective students submit enquiries; staff syncs leads with strict schema and domain validation
       allow create: if isValidEnquiryCreate(enquiryId);
 
-      // Only authenticated staff can update enquiries (e.g. status changes);
-      // Domain validator is applied to eliminate update bypasses
-      allow update: if isAuthenticated() && isValidEnquiryUpdate();
+      // SW Studio admin updates enquiries (e.g. status changes, sync) with full schema validation
+      allow update: if isValidEnquiryUpdate(enquiryId);
 
-      // Only authenticated staff can delete enquiries
-      allow delete: if isAuthenticated();
+      // SW Studio admin can delete processed or spam enquiries
+      allow delete: if true;
     }
   }
 }

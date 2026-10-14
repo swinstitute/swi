@@ -165,14 +165,23 @@ export const saveEnquiryToFirebase = async (enquiry: Enquiry, config?: FirebaseS
 
   try {
     const docRef = doc(db, 'enquiries', enquiry.id);
-    await setDoc(
-      docRef,
-      {
-        ...enquiry,
-        createdAt: enquiry.timestamp || new Date().toISOString(),
-      },
-      { merge: true }
-    );
+    const payload = {
+      id: enquiry.id,
+      name: (enquiry.name || '').trim().slice(0, 100),
+      phone: (enquiry.phone || '').trim().slice(0, 25),
+      email: (enquiry.email || '').trim().slice(0, 100),
+      age: (enquiry.age || '').trim().slice(0, 20),
+      course: (['Fashion Design', 'Interior Design', 'Both / Not Sure'].includes(enquiry.course)
+        ? enquiry.course
+        : 'Both / Not Sure') as Enquiry['course'],
+      message: (enquiry.message || '').slice(0, 2000),
+      status: (['New', 'Contacted', 'Enrolled', 'Archived', 'Closed'].includes(enquiry.status)
+        ? enquiry.status
+        : 'New') as Enquiry['status'],
+      timestamp: (enquiry.timestamp || new Date().toISOString()).slice(0, 100),
+      createdAt: (enquiry.timestamp || new Date().toISOString()).slice(0, 100),
+    };
+    await setDoc(docRef, payload, { merge: true });
     return true;
   } catch (error) {
     console.error('Error saving enquiry to Firebase:', error);

@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, MapPin, Phone, MessageSquare, Mail, Send, CheckCircle2, ArrowUpRight } from 'lucide-react';
+import { Sparkles, MapPin, Phone, MessageSquare, Mail, Send, CheckCircle2, ArrowUpRight, Copy, Check, Calendar, User } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { SiteContent } from '@/lib/types';
+import { SiteContent, Enquiry } from '@/lib/types';
 import { addEnquiry } from '@/lib/cms-store';
 
 const InstagramIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
@@ -31,12 +31,15 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [lastCreated, setLastCreated] = useState<Enquiry | null>(null);
+  const [copiedRef, setCopiedRef] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return;
 
-    addEnquiry(formData);
+    const record = addEnquiry(formData);
+    setLastCreated(record);
     setSubmitted(true);
 
     confetti({
@@ -47,8 +50,31 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
     });
   };
 
+  const handleCopyRef = () => {
+    if (!lastCreated?.id) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(lastCreated.id);
+      setCopiedRef(true);
+      setTimeout(() => setCopiedRef(false), 2000);
+    }
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setCopiedRef(false);
+    setFormData({
+      name: '',
+      phone: '',
+      email: '',
+      age: '',
+      course: 'Fashion Design',
+      message: '',
+    });
+  };
+
   const getWhatsAppUrl = () => {
-    const text = `Hello SW Institute! I submitted a quick studio enquiry:\n*Name*: ${formData.name}\n*Phone*: ${formData.phone}\n*Course*: ${formData.course}`;
+    const refTag = lastCreated?.id ? `[Ref: #${lastCreated.id}] ` : '';
+    const text = `Hello SW Institute! I submitted an admission enquiry ${refTag}\n• Name: ${formData.name}\n• Phone: ${formData.phone}\n• Age: ${formData.age || 'N/A'}\n• Course: ${formData.course}\n• Query: ${formData.message || 'General Information'}`;
     return `https://wa.me/917772992592?text=${encodeURIComponent(text)}`;
   };
 
@@ -154,7 +180,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
           </div>
 
           {/* Column 2: Enhanced High-Converting Inline Studio Enquiry Form */}
-          <div className="lg:col-span-5 p-7 rounded-3xl bg-white border-2 border-neutral-200 shadow-xl flex flex-col justify-between">
+          <div className="lg:col-span-5 p-6 sm:p-7 rounded-3xl bg-white border-2 border-neutral-200 shadow-xl flex flex-col justify-between">
             {!submitted ? (
               <div>
                 <div className="mb-4">
@@ -167,31 +193,73 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                   </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-3.5 text-xs font-semibold">
-                  <div>
-                    <label className="block text-neutral-800 uppercase mb-1 font-bold">YOUR NAME *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Priya Sharma"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] font-medium"
-                    />
+                <form onSubmit={handleSubmit} className="space-y-3 text-xs font-semibold">
+                  {/* Name & Phone */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-[#F20D63]" />
+                        YOUR NAME *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Priya Sharma"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-[#1749C6]" />
+                        PHONE NUMBER *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="+91 99939 97767"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#1749C6] focus:outline-none text-[#0B0B0D] font-medium"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-neutral-800 uppercase mb-1 font-bold">PHONE NUMBER *</label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+91 99939 97767"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] font-medium"
-                    />
+                  {/* Age & Email */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#FFB800]" />
+                        APPLICANT AGE *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 19 or 22"
+                        value={formData.age}
+                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#FFB800] focus:outline-none text-[#0B0B0D] font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-neutral-800 uppercase mb-1 font-bold flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-neutral-500" />
+                        EMAIL (OPTIONAL)
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="priya@example.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#0B0B0D] focus:outline-none text-[#0B0B0D] font-medium"
+                      />
+                    </div>
                   </div>
 
+                  {/* Program Selection */}
                   <div>
                     <label className="block text-neutral-800 uppercase mb-1 font-bold">PROGRAM INTEREST</label>
                     <select
@@ -202,7 +270,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                           course: e.target.value as 'Fashion Design' | 'Interior Design' | 'Both / Not Sure',
                         })
                       }
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#1749C6] focus:outline-none text-[#0B0B0D] font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#1749C6] focus:outline-none text-[#0B0B0D] font-medium"
                     >
                       <option value="Fashion Design">Diploma in Fashion Designing</option>
                       <option value="Interior Design">Diploma in Interior Designing</option>
@@ -210,6 +278,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                     </select>
                   </div>
 
+                  {/* Message */}
                   <div>
                     <label className="block text-neutral-800 uppercase mb-1 font-bold">MESSAGE / QUESTION (OPTIONAL)</label>
                     <textarea
@@ -217,7 +286,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                       placeholder="Your questions about fees, batches, or eligibility..."
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] font-medium"
+                      className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F3] border border-neutral-200 focus:border-[#F20D63] focus:outline-none text-[#0B0B0D] font-medium"
                     />
                   </div>
 
@@ -232,24 +301,79 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                 </form>
               </div>
             ) : (
-              <div className="text-center py-6 space-y-4 my-auto">
+              /* Receipt Confirmation Screen */
+              <div className="text-center py-4 space-y-3.5 my-auto">
                 <div className="w-12 h-12 rounded-full bg-[#F20D63] text-white flex items-center justify-center mx-auto shadow-md">
-                  <CheckCircle2 className="w-8 h-8" />
+                  <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h3 className="text-2xl font-black uppercase text-[#0B0B0D]">ENQUIRY SUBMITTED!</h3>
-                <p className="text-xs text-neutral-600 font-medium leading-relaxed">
-                  Thank you, <span className="font-bold text-[#0B0B0D]">{formData.name}</span>. Our studio team will contact you shortly on <span className="text-[#F20D63] font-mono font-bold">{formData.phone}</span>.
-                </p>
-                <a
-                  href={getWhatsAppUrl()}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#25D366] text-white font-bold text-xs uppercase tracking-wider shadow-md hover:bg-black transition-colors whitespace-nowrap active:scale-95"
-                >
-                  <MessageSquare className="w-4 h-4 shrink-0" />
-                  <span>CHAT ON WHATSAPP</span>
-                  <ArrowUpRight className="w-4 h-4 shrink-0" />
-                </a>
+                <div>
+                  <h3 className="text-2xl font-black uppercase text-[#0B0B0D]">ENQUIRY REGISTERED!</h3>
+                  <p className="text-xs text-neutral-600 font-medium leading-relaxed mt-1">
+                    Thank you, <span className="font-bold text-[#0B0B0D]">{formData.name}</span>. Your enquiry has been received in SW Studio.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#F8F7F3] border border-neutral-200 max-w-sm mx-auto text-left text-xs space-y-2 font-medium">
+                  <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                    <span className="text-neutral-500 font-mono text-[11px]">UNIQUE ENQUIRY NO:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-sm text-[#1749C6] font-black tracking-wider">
+                        {lastCreated?.id}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCopyRef}
+                        className="px-2 py-0.5 rounded-md bg-white border border-neutral-300 hover:bg-neutral-100 text-[#0B0B0D] text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Copy Unique Enquiry Number"
+                      >
+                        {copiedRef ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-600">COPIED</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>COPY</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between border-b border-neutral-200 pb-1.5 text-[11px]">
+                    <span className="text-neutral-500 font-mono">APPLICANT AGE:</span>
+                    <span className="font-bold text-[#0B0B0D]">{formData.age || 'N/A'} yrs</span>
+                  </div>
+                  <div className="flex justify-between border-b border-neutral-200 pb-1.5 text-[11px]">
+                    <span className="text-neutral-500 font-mono">PROGRAM:</span>
+                    <span className="font-bold text-[#F20D63]">{formData.course}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-neutral-500 font-mono">PHONE:</span>
+                    <span className="font-mono text-[#0B0B0D] font-bold">{formData.phone}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+                  <a
+                    href={getWhatsAppUrl()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#25D366] text-white font-bold text-xs uppercase tracking-wider shadow-md hover:bg-black transition-colors whitespace-nowrap active:scale-95"
+                  >
+                    <MessageSquare className="w-4 h-4 shrink-0" />
+                    <span>CHAT ON WHATSAPP</span>
+                    <ArrowUpRight className="w-4 h-4 shrink-0" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="px-4 py-2.5 rounded-full bg-neutral-200 hover:bg-neutral-300 text-[#0B0B0D] font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    SUBMIT ANOTHER
+                  </button>
+                </div>
               </div>
             )}
           </div>

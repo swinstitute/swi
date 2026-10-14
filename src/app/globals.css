@@ -113,34 +113,22 @@ html[data-theme="dark"] select {
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Custom radial cursor styling for desktop pointer devices */
-@media (pointer: fine) {
-  html:not([data-cursor-style="normal"]),
-  html:not([data-cursor-style="normal"]) body,
-  html:not([data-cursor-style="normal"]) *,
-  html:not([data-cursor-style="normal"]) a,
-  html:not([data-cursor-style="normal"]) button,
-  html:not([data-cursor-style="normal"]) input,
-  html:not([data-cursor-style="normal"]) select,
-  html:not([data-cursor-style="normal"]) textarea,
-  html:not([data-cursor-style="normal"]) label {
-    cursor: none !important;
-  }
-}
-
-html[data-cursor-style="normal"] *,
-html[data-cursor-style="normal"] body {
+/* Standard Normal Browser Cursor Across All Devices */
+html,
+body {
   cursor: auto !important;
 }
 
-html[data-cursor-style="normal"] a,
-html[data-cursor-style="normal"] button,
-html[data-cursor-style="normal"] [role="button"],
-html[data-cursor-style="normal"] select {
+a,
+button,
+[role="button"],
+select,
+.cursor-pointer {
   cursor: pointer !important;
 }
 
-html[data-cursor-style="normal"] input,
-html[data-cursor-style="normal"] textarea {
+input,
+textarea {
   cursor: text !important;
 }
+

@@ -94,7 +94,6 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
                   key={pillar.id}
                   onClick={() => setActiveTab(idx)}
                   onMouseEnter={() => setActiveTab(idx)}
-                  data-cursor="VIEW"
                   className={`cursor-pointer p-6 sm:p-8 rounded-3xl transition-all duration-500 border ${
                     isActive
                       ? 'bg-white border-[#0B0B0D] shadow-2xl scale-[1.02]'

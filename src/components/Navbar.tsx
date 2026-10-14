@@ -228,7 +228,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenEnquiry }) => {
             {/* Light Version Vibrant Magenta ENQUIRE NOW Button */}
             <button
               onClick={onOpenEnquiry}
-              data-cursor="ENQUIRE"
               className="flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-black tracking-widest uppercase transition-all duration-300 bg-gradient-to-r from-[#F20D63] via-[#E00B5B] to-[#F20D63] text-white shadow-[0_8px_25px_rgba(242,13,99,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:shadow-[0_12px_32px_rgba(242,13,99,0.55)] hover:scale-[1.03] active:scale-95 border border-white/30 cursor-pointer whitespace-nowrap"
             >
               <span>ENQUIRE NOW</span>

@@ -292,7 +292,6 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
 
                   <button
                     type="submit"
-                    data-cursor="ENQUIRE"
                     className="w-full py-3.5 rounded-full bg-[#0B0B0D] text-white font-black text-xs uppercase tracking-widest hover:bg-[#F20D63] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg active:scale-95 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />

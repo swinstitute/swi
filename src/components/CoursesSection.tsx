@@ -58,7 +58,6 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenE
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
                 onClick={() => setSelectedCourse(course)}
-                data-cursor="EXPLORE"
                 className="group relative cursor-pointer rounded-3xl overflow-hidden bg-white border-2 border-neutral-200 hover:border-[#0B0B0D] shadow-xl transition-all duration-500 flex flex-col justify-between"
               >
                 {/* Image Showcase Container with 1.04x zoom hover */}

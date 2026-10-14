@@ -87,7 +87,6 @@ export const WhySWSection: React.FC<{ content?: SiteContent }> = ({ content }) =
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
-                data-cursor="VIEW"
                 className="snap-center shrink-0 w-[300px] sm:w-[360px] p-8 rounded-3xl bg-white border-2 border-neutral-200 hover:border-[#0B0B0D] shadow-xl hover:shadow-2xl transition-all duration-500 flex flex-col justify-between group"
               >
                 <div>

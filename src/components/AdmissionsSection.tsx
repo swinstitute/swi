@@ -87,7 +87,6 @@ export const AdmissionsSection: React.FC<AdmissionsSectionProps> = ({ content, o
               <div className="flex flex-wrap items-center gap-4 pt-4">
                 <button
                   onClick={onOpenEnquiry}
-                  data-cursor="ENQUIRE"
                   className="group flex items-center gap-3 px-10 py-5 rounded-full bg-[#F20D63] text-white font-black text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 shadow-2xl shadow-pink-500/40 active:scale-95 cursor-pointer"
                 >
                   <span>{content?.admissionsButtonText || 'ENQUIRE ABOUT 2026 BATCHES'}</span>

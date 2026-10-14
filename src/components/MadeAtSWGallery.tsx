@@ -111,7 +111,6 @@ export const MadeAtSWGallery: React.FC<MadeAtSWGalleryProps> = ({ galleryItems }
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.4 }}
               onClick={() => setLightboxItem(item)}
-              data-cursor="VIEW ↗"
               className="group relative cursor-pointer rounded-3xl overflow-hidden bg-white border-2 border-neutral-200 hover:border-[#0B0B0D] shadow-xl transition-all duration-500"
             >
               <div

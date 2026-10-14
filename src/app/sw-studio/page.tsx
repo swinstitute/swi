@@ -1311,11 +1311,11 @@ export default function SWStudioAdminPage() {
 
                   <div className="p-6 rounded-3xl bg-white/5 border border-white/10">
                     <span className="text-xs font-mono text-neutral-400 uppercase">CURSOR MODE</span>
-                    <span className="block text-2xl font-black text-[#FFB800] mt-3 uppercase">
-                      {siteContent.cursorStyle === 'radial' ? '36px Radial Blur' : 'Normal OS Pointer'}
+                    <span className="block text-2xl font-black text-emerald-400 mt-3 uppercase">
+                      Normal OS Pointer
                     </span>
                     <span className="text-[10px] text-neutral-500 font-mono mt-1 block">
-                      Interactive Desktop Pointer
+                      Standard Clean Mouse (Animations Disabled)
                     </span>
                   </div>
 
@@ -1802,61 +1802,26 @@ export default function SWStudioAdminPage() {
                 {/* 1. Cursor Style Control */}
                 <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
                   <div className="flex items-center gap-3">
-                    <MousePointer className="w-5 h-5 text-[#F20D63]" />
+                    <MousePointer className="w-5 h-5 text-emerald-400" />
                     <div>
-                      <h3 className="text-lg font-black uppercase">INTERACTIVE CURSOR MODE</h3>
+                      <h3 className="text-lg font-black uppercase">CURSOR MODE (STANDARD)</h3>
                       <p className="text-xs text-neutral-400">
-                        Choose between the custom 36px radial blur ring cursor or standard browser pointer.
+                        The website uses the clean, native OS browser cursor without trailing or floating animations.
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div
-                      onClick={() => {
-                        const updated = { ...siteContent, cursorStyle: 'radial' as const };
-                        setSiteContent(updated);
-                        applySiteTheme(updated);
-                      }}
-                      className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${
-                        siteContent.cursorStyle === 'radial'
-                          ? 'bg-[#F20D63]/15 border-[#F20D63] text-white shadow-lg'
-                          : 'bg-black/40 border-white/10 text-neutral-400 hover:border-white/30'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full border-2 border-[#F20D63] bg-[#F20D63]/20 flex items-center justify-center">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#F20D63]" />
-                        </div>
-                        <div>
-                          <span className="block text-sm font-black uppercase text-white">36px Radial Blur Ring</span>
-                          <span className="text-[11px] font-mono text-neutral-400">Custom Studio Blur Cursor</span>
-                        </div>
+                  <div className="p-5 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/30 text-white flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <MousePointer className="w-8 h-8 text-emerald-400" />
+                      <div>
+                        <span className="block text-sm font-black uppercase text-white">Normal OS Pointer (Active Everywhere)</span>
+                        <span className="text-[11px] font-mono text-emerald-300">Clean native desktop arrow, pointers on buttons/links, and text cursor on inputs</span>
                       </div>
-                      {siteContent.cursorStyle === 'radial' && <Check className="w-5 h-5 text-[#F20D63]" />}
                     </div>
-
-                    <div
-                      onClick={() => {
-                        const updated = { ...siteContent, cursorStyle: 'normal' as const };
-                        setSiteContent(updated);
-                        applySiteTheme(updated);
-                      }}
-                      className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${
-                        siteContent.cursorStyle === 'normal'
-                          ? 'bg-[#1749C6]/15 border-[#1749C6] text-white shadow-lg'
-                          : 'bg-black/40 border-white/10 text-neutral-400 hover:border-white/30'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <MousePointer className="w-8 h-8 text-[#1749C6]" />
-                        <div>
-                          <span className="block text-sm font-black uppercase text-white">Normal OS Pointer</span>
-                          <span className="text-[11px] font-mono text-neutral-400">Standard Mouse Pointer</span>
-                        </div>
-                      </div>
-                      {siteContent.cursorStyle === 'normal' && <Check className="w-5 h-5 text-[#1749C6]" />}
-                    </div>
+                    <span className="px-3 py-1 rounded-full bg-emerald-500 text-black text-xs font-black uppercase">
+                      ACTIVE
+                    </span>
                   </div>
                 </div>
 

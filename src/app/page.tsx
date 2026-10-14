@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CustomCursor } from '@/components/CustomCursor';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { AboutSection } from '@/components/AboutSection';
@@ -101,9 +100,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-site-bg text-site-fg relative overflow-x-hidden selection:bg-[#F20D63] selection:text-white transition-colors duration-300">
-      {/* Custom Pointed Cursor Active All Over Website */}
-      <CustomCursor />
-
       {/* Discrete Passcode Modal for Secret Admin Access */}
       <SecretAdminModal />
 

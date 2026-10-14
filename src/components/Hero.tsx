@@ -162,7 +162,6 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
           >
             <a
               href="#programs"
-              data-cursor="EXPLORE"
               className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-[#0B0B0D] text-white font-black text-xs uppercase tracking-widest hover:bg-[#F20D63] transition-all duration-300 shadow-xl shadow-black/15 hover:shadow-pink-500/25 active:scale-95 overflow-hidden"
             >
               <span className="relative z-10">{content.heroCtaExplore || 'EXPLORE PROGRAMS'}</span>
@@ -171,7 +170,6 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
 
             <button
               onClick={onOpenEnquiry}
-              data-cursor="ENQUIRE"
               className="group flex items-center gap-3 px-8 py-4 rounded-full bg-white text-[#0B0B0D] border-2 border-[#0B0B0D] font-black text-xs uppercase tracking-widest hover:bg-[#1749C6] hover:text-white hover:border-[#1749C6] transition-all duration-300 shadow-md active:scale-95 cursor-pointer"
             >
               <span>{content.heroCtaEnquire || 'ENQUIRE NOW'}</span>

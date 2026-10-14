@@ -78,7 +78,7 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   },
 
   // Global Engine Controls
-  cursorStyle: 'radial',
+  cursorStyle: 'normal',
   themeMode: 'light',
   colorTheme: COLOR_THEME_PRESETS.signature,
   logos: {
@@ -536,7 +536,7 @@ export const applySiteTheme = (content: SiteContent) => {
   }
 
   root.setAttribute('data-theme', effectiveMode);
-  root.setAttribute('data-cursor-style', content.cursorStyle || 'radial');
+  root.setAttribute('data-cursor-style', 'normal');
 
   if (effectiveMode === 'dark') {
     const isDarkCustom = theme.background && theme.background !== '#F8F7F3' && theme.background !== '#FAFAFA' && theme.background !== '#F5F2EB';

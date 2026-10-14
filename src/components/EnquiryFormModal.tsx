@@ -249,7 +249,6 @@ export const EnquiryFormModal: React.FC<EnquiryFormModalProps> = ({
                   <div className="pt-1">
                     <button
                       type="submit"
-                      data-cursor="ENQUIRE"
                       className="w-full py-3.5 rounded-full bg-[#0B0B0D] text-white font-black text-xs uppercase tracking-widest hover:bg-[#F20D63] transition-all duration-300 flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95"
                     >
                       <Send className="w-4 h-4" />

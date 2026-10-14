@@ -1950,8 +1950,8 @@ export default function SWStudioAdminPage() {
                           ) : (
                             <div className="text-center space-y-1">
                               <SWLogo layout="horizontal" variant="light" size="sm" />
-                              <span className="block text-[10px] font-mono text-neutral-500">
-                                Default Vector SVG Active
+                              <span className="block text-[10px] font-mono text-neutral-400">
+                                Official Brand Logo Active
                               </span>
                             </div>
                           )}

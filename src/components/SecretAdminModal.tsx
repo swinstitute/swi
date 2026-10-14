@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Key, ArrowRight, X, ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { SWLogo } from './SWLogo';
 
 export const SecretAdminModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -102,13 +103,17 @@ export const SecretAdminModal: React.FC = () => {
             <X className="w-5 h-5" />
           </button>
 
+          <div className="mb-5 pb-4 border-b border-white/10">
+            <SWLogo layout="horizontal" variant="light" size="sm" />
+          </div>
+
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#F20D63]/20 border border-[#F20D63]/40 text-[#F20D63] flex items-center justify-center shadow-lg">
-              <Lock className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-2xl bg-[#F20D63]/20 border border-[#F20D63]/40 text-[#F20D63] flex items-center justify-center shadow-lg">
+              <Lock className="w-5 h-5" />
             </div>
             <div>
               <p className="text-[10px] font-mono font-black text-[#F20D63] tracking-widest uppercase">RESTRICTED PORTAL</p>
-              <h3 className="text-xl font-black tracking-tight uppercase text-white">SW STUDIO CMS</h3>
+              <h3 className="text-lg font-black tracking-tight uppercase text-white">SW STUDIO CMS</h3>
             </div>
           </div>
 

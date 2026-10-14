@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
-interface SWLogoProps {
+export interface SWLogoProps {
   layout?: 'horizontal' | 'vertical' | 'mark-only';
   variant?: 'dark' | 'light' | 'pink';
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   customLogoUrl?: string;
+  showSubtitle?: boolean;
 }
 
 export const SWLogo: React.FC<SWLogoProps> = ({
@@ -16,172 +18,209 @@ export const SWLogo: React.FC<SWLogoProps> = ({
   className = '',
   size = 'md',
   customLogoUrl,
+  showSubtitle = true,
 }) => {
-  const getFill = () => {
+  // Determine mark image source
+  const getLogoSrc = (): string => {
+    if (customLogoUrl && customLogoUrl.trim() !== '') {
+      return customLogoUrl;
+    }
     switch (variant) {
       case 'light':
-        return '#FFFFFF';
+        return '/images/sw-logo-mark-light.png';
       case 'pink':
-        return '#F20D63';
+        return '/images/sw-logo-mark-pink.png';
       case 'dark':
       default:
-        return '#0B0B0D';
+        return '/images/sw-logo-mark-dark.png';
     }
   };
 
-  const getSubtextFill = () => {
-    switch (variant) {
-      case 'light':
-        return 'rgba(255,255,255,0.7)';
-      case 'pink':
-        return '#1749C6';
-      case 'dark':
-      default:
-        return 'rgba(11,11,13,0.75)';
-    }
-  };
+  // Mark height in pixels based on size & layout
+  const getDimensions = (): { height: number; width: number } => {
+    // Original mark ratio: 753 width / 693 height = 1.0866
+    const ratio = 1.0866;
+    let h = 40;
 
-  const getHeight = () => {
     switch (size) {
       case 'sm':
-        return layout === 'vertical' ? 48 : 32;
+        h = layout === 'vertical' ? 52 : 34;
+        break;
       case 'lg':
-        return layout === 'vertical' ? 96 : 56;
+        h = layout === 'vertical' ? 80 : 54;
+        break;
       case 'xl':
-        return layout === 'vertical' ? 120 : 72;
+        h = layout === 'vertical' ? 110 : 72;
+        break;
       case 'md':
       default:
-        return layout === 'vertical' ? 72 : 42;
+        h = layout === 'vertical' ? 64 : 42;
+        break;
+    }
+
+    return { height: h, width: Math.round(h * ratio) };
+  };
+
+  // Typography styling based on variant
+  const getThemeStyles = () => {
+    switch (variant) {
+      case 'light':
+        return {
+          titleColor: '#FFFFFF',
+          subColor: 'rgba(255, 255, 255, 0.72)',
+          dotColor: 'bg-[#F20D63]',
+        };
+      case 'pink':
+        return {
+          titleColor: '#F20D63',
+          subColor: '#1749C6',
+          dotColor: 'bg-[#1749C6]',
+        };
+      case 'dark':
+      default:
+        return {
+          titleColor: '#0B0B0D',
+          subColor: 'rgba(11, 11, 13, 0.75)',
+          dotColor: 'bg-[#F20D63]',
+        };
     }
   };
 
-  const fill = getFill();
-  const subFill = getSubtextFill();
-  const height = getHeight();
+  // Typography font size based on size
+  const getTypographyStyles = () => {
+    switch (size) {
+      case 'sm':
+        return {
+          title: 'text-[14px] sm:text-[15px]',
+          sub: 'text-[7px] min-[360px]:text-[7.5px] sm:text-[8.5px]',
+          dot: 'w-1.5 h-1.5',
+          gap: 'gap-2 sm:gap-2.5',
+        };
+      case 'lg':
+        return {
+          title: 'text-2xl sm:text-3xl',
+          sub: 'text-[10px] sm:text-[11px]',
+          dot: 'w-2.5 h-2.5',
+          gap: 'gap-3.5',
+        };
+      case 'xl':
+        return {
+          title: 'text-3xl sm:text-4xl',
+          sub: 'text-xs sm:text-sm',
+          dot: 'w-3 h-3',
+          gap: 'gap-4',
+        };
+      case 'md':
+      default:
+        return {
+          title: 'text-[16px] sm:text-[18px]',
+          sub: 'text-[8px] sm:text-[9.5px]',
+          dot: 'w-2 h-2',
+          gap: 'gap-2.5 sm:gap-3',
+        };
+    }
+  };
 
-  if (customLogoUrl) {
-    return (
-      <div className={`inline-flex items-center ${className}`}>
-        <img
-          src={customLogoUrl}
-          alt="SW Institute Studio Logo"
-          style={{ height: `${height}px` }}
-          className="w-auto max-w-full object-contain transition-transform duration-300 hover:scale-105"
-        />
-      </div>
-    );
-  }
+  const { height, width } = getDimensions();
+  const theme = getThemeStyles();
+  const typo = getTypographyStyles();
+  const logoSrc = getLogoSrc();
 
+  // 1. Mark-only Layout (Icon only)
   if (layout === 'mark-only') {
     return (
-      <svg
-        height={height}
-        viewBox="0 0 160 140"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={`transition-transform duration-300 hover:scale-105 ${className}`}
-      >
-        {/* Isometric 3D Architectural Roof / Ribbon Mark */}
-        {/* Left Side (S shape angle) */}
-        <path
-          d="M80 15 L15 50 L15 100 L42 85 L42 63 L80 40 Z"
-          fill={fill}
+      <div className={`inline-flex items-center shrink-0 ${className}`}>
+        <Image
+          src={logoSrc}
+          alt="SW Institute Logo"
+          width={width}
+          height={height}
+          unoptimized
+          priority
+          style={{ height: `${height}px`, width: 'auto' }}
+          className="object-contain transition-transform duration-300 hover:scale-105"
         />
-        <path
-          d="M42 85 L15 100 L80 135 L80 110 L42 90 Z"
-          fill={fill}
-          opacity="0.9"
-        />
-        {/* Inner S cut out line */}
-        <path
-          d="M42 63 L80 40 L80 62 L58 75 L80 88 L80 110 L42 85 Z"
-          fill={fill}
-          opacity="0.8"
-        />
-        {/* Right Side (W shape angle) */}
-        <path
-          d="M80 15 L145 50 L145 100 L118 85 L118 63 L80 40 Z"
-          fill={fill}
-        />
-        <path
-          d="M118 85 L145 100 L80 135 L80 110 L118 90 Z"
-          fill={fill}
-          opacity="0.9"
-        />
-        {/* Accent Pink Dot/Pill */}
-        <circle cx="80" cy="20" r="5" fill="#F20D63" />
-      </svg>
+      </div>
     );
   }
 
+  // 2. Vertical Layout (Mark on top, centered Institute Name below)
   if (layout === 'vertical') {
     return (
-      <div className={`flex flex-col items-center text-center ${className}`}>
-        <svg
-          height={height * 0.7}
-          viewBox="0 0 160 140"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="mb-2"
-        >
-          <path d="M80 15 L15 50 L15 100 L42 85 L42 63 L80 40 Z" fill={fill} />
-          <path d="M42 85 L15 100 L80 135 L80 110 L42 90 Z" fill={fill} opacity="0.9" />
-          <path d="M42 63 L80 40 L80 62 L58 75 L80 88 L80 110 L42 85 Z" fill={fill} opacity="0.8" />
-          <path d="M80 15 L145 50 L145 100 L118 85 L118 63 L80 40 Z" fill={fill} />
-          <path d="M118 85 L145 100 L80 135 L80 110 L118 90 Z" fill={fill} opacity="0.9" />
-          <circle cx="80" cy="20" r="5" fill="#F20D63" />
-        </svg>
-        <div className="flex flex-col items-center">
-          <span
-            className="font-extrabold tracking-tight uppercase leading-none"
-            style={{ color: fill, fontSize: `${height * 0.35}px` }}
-          >
-            S W Institute
-          </span>
-          <span
-            className="font-bold tracking-widest uppercase mt-1 text-center"
-            style={{ color: subFill, fontSize: `${height * 0.14}px`, letterSpacing: '0.15em' }}
-          >
-            SOUTH WEST INSTITUTE OF DESIGN AND INNOVATION
-          </span>
+      <div className={`flex flex-col items-center text-center select-none ${className}`}>
+        <div className="relative mb-3 transition-transform duration-300 hover:scale-105">
+          <Image
+            src={logoSrc}
+            alt="SW Institute Logo"
+            width={width}
+            height={height}
+            unoptimized
+            priority
+            style={{ height: `${height}px`, width: 'auto' }}
+            className="object-contain drop-shadow-sm"
+          />
+        </div>
+        <div className="flex flex-col items-center leading-none">
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`font-black uppercase tracking-tight ${typo.title}`}
+              style={{ color: theme.titleColor }}
+            >
+              SW Institute
+            </span>
+            <span className={`rounded-full animate-pulse shrink-0 ${typo.dot} ${theme.dotColor}`} />
+          </div>
+          {showSubtitle && (
+            <span
+              className={`font-bold uppercase tracking-[0.14em] sm:tracking-[0.18em] mt-1 text-center ${typo.sub}`}
+              style={{ color: theme.subColor }}
+            >
+              SOUTH WEST INSTITUTE OF DESIGN AND INNOVATION
+            </span>
+          )}
         </div>
       </div>
     );
   }
 
-  // Horizontal layout (default)
+  // 3. Horizontal Layout (Default: Mark on left, Institute Name on right)
   return (
-    <div className={`flex items-center gap-3.5 select-none ${className}`}>
-      <svg
-        height={height}
-        viewBox="0 0 160 140"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 transition-transform duration-300 group-hover:scale-105"
-      >
-        <path d="M80 15 L15 50 L15 100 L42 85 L42 63 L80 40 Z" fill={fill} />
-        <path d="M42 85 L15 100 L80 135 L80 110 L42 90 Z" fill={fill} opacity="0.9" />
-        <path d="M42 63 L80 40 L80 62 L58 75 L80 88 L80 110 L42 85 Z" fill={fill} opacity="0.8" />
-        <path d="M80 15 L145 50 L145 100 L118 85 L118 63 L80 40 Z" fill={fill} />
-        <path d="M118 85 L145 100 L80 135 L80 110 L118 90 Z" fill={fill} opacity="0.9" />
-        <circle cx="80" cy="20" r="5" fill="#F20D63" />
-      </svg>
+    <div className={`flex items-center ${typo.gap} select-none group text-left ${className}`}>
+      <div className="relative shrink-0 transition-transform duration-300 group-hover:scale-105">
+        <Image
+          src={logoSrc}
+          alt="SW Institute Logo"
+          width={width}
+          height={height}
+          unoptimized
+          priority
+          style={{ height: `${height}px`, width: 'auto' }}
+          className="object-contain"
+        />
+      </div>
       <div className="flex flex-col justify-center leading-none">
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-center gap-1.5">
           <span
-            className="font-black tracking-tight uppercase"
-            style={{ color: fill, fontSize: `${height * 0.52}px`, fontFamily: 'var(--font-heading, sans-serif)' }}
+            className={`font-black uppercase tracking-tight ${typo.title}`}
+            style={{ color: theme.titleColor }}
           >
-            S W Institute
+            SW Institute
           </span>
-          <span className="w-2 h-2 rounded-full bg-[#F20D63] animate-pulse" />
+          <span className={`rounded-full animate-pulse shrink-0 ${typo.dot} ${theme.dotColor}`} />
         </div>
-        <span
-          className="font-bold uppercase tracking-wider mt-0.5"
-          style={{ color: subFill, fontSize: `${height * 0.22}px`, letterSpacing: '0.12em' }}
-        >
-          SOUTH WEST INSTITUTE OF DESIGN AND INNOVATION
-        </span>
+        {showSubtitle && (
+          <span
+            className={`font-bold uppercase tracking-[0.11em] sm:tracking-[0.15em] mt-1 ${typo.sub}`}
+            style={{ color: theme.subColor }}
+          >
+            <span className="hidden min-[360px]:inline">
+              SOUTH WEST INSTITUTE OF DESIGN AND INNOVATION
+            </span>
+            <span className="min-[360px]:hidden">
+              DESIGN &amp; INNOVATION
+            </span>
+          </span>
+        )}
       </div>
     </div>
   );

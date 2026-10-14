@@ -82,11 +82,11 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   themeMode: 'light',
   colorTheme: COLOR_THEME_PRESETS.signature,
   logos: {
-    headerLogo: '',
-    mobileHeaderLogo: '',
-    footerLogo: '',
-    adminLogo: '',
-    brandSymbol: '',
+    headerLogo: '/images/sw-logo-mark-dark.png',
+    mobileHeaderLogo: '/images/sw-logo-mark-dark.png',
+    footerLogo: '/images/sw-logo-mark-dark.png',
+    adminLogo: '/images/sw-logo-mark-light.png',
+    brandSymbol: '/images/sw-logo-mark-dark.png',
   },
   sectionOrder: INITIAL_SECTIONS,
 
@@ -283,7 +283,13 @@ export const getStoredContent = (): SiteContent => {
       ...parsed,
       imgbbApiKey: parsed.imgbbApiKey || INITIAL_SITE_CONTENT.imgbbApiKey,
       firebaseConfig: { ...INITIAL_SITE_CONTENT.firebaseConfig, ...(parsed.firebaseConfig || {}) },
-      logos: { ...INITIAL_SITE_CONTENT.logos, ...(parsed.logos || {}) },
+      logos: {
+        headerLogo: parsed.logos?.headerLogo || INITIAL_SITE_CONTENT.logos?.headerLogo,
+        mobileHeaderLogo: parsed.logos?.mobileHeaderLogo || INITIAL_SITE_CONTENT.logos?.mobileHeaderLogo,
+        footerLogo: parsed.logos?.footerLogo || INITIAL_SITE_CONTENT.logos?.footerLogo,
+        adminLogo: parsed.logos?.adminLogo || INITIAL_SITE_CONTENT.logos?.adminLogo,
+        brandSymbol: parsed.logos?.brandSymbol || INITIAL_SITE_CONTENT.logos?.brandSymbol,
+      },
       colorTheme: { ...INITIAL_SITE_CONTENT.colorTheme, ...(parsed.colorTheme || {}) },
       sectionOrder: Array.isArray(parsed.sectionOrder) && parsed.sectionOrder.length > 0
         ? parsed.sectionOrder

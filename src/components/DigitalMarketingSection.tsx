@@ -19,15 +19,36 @@ const FacebookIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' 
   </svg>
 );
 
-export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = () => {
-  const tags = [
-    { label: 'Instagram Growth', color: '#F20D63', textColor: '#FFFFFF', icon: InstagramIcon, pos: 'top-4 left-4 sm:-left-8' },
-    { label: 'Facebook Ads', color: '#1749C6', textColor: '#FFFFFF', icon: FacebookIcon, pos: 'top-12 right-2 sm:-right-8' },
-    { label: 'Personal Branding', color: '#FFB800', textColor: '#0B0B0D', icon: Award, pos: 'bottom-20 left-2 sm:-left-12' },
-    { label: 'Social Media Strategy', color: '#0B0B0D', textColor: '#FFFFFF', icon: Share2, pos: 'bottom-8 right-4 sm:-right-10' },
-    { label: 'Content Creation', color: '#F20D63', textColor: '#FFFFFF', icon: TrendingUp, pos: 'top-1/2 -left-6 sm:-left-16' },
-    { label: 'Client Acquisition', color: '#1749C6', textColor: '#FFFFFF', icon: Rocket, pos: 'bottom-1/3 -right-6 sm:-right-14' },
+export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = ({ content }) => {
+  const defaultTags = [
+    { label: 'Instagram Growth', color: '#F20D63', textColor: '#FFFFFF' },
+    { label: 'Facebook Ads', color: '#1749C6', textColor: '#FFFFFF' },
+    { label: 'Personal Branding', color: '#FFB800', textColor: '#0B0B0D' },
+    { label: 'Social Media Strategy', color: '#0B0B0D', textColor: '#FFFFFF' },
+    { label: 'Content Creation', color: '#F20D63', textColor: '#FFFFFF' },
+    { label: 'Client Acquisition', color: '#1749C6', textColor: '#FFFFFF' },
   ];
+
+  const positions = [
+    'top-4 left-4 sm:-left-8',
+    'top-12 right-2 sm:-right-8',
+    'bottom-20 left-2 sm:-left-12',
+    'bottom-8 right-4 sm:-right-10',
+    'top-1/2 -left-6 sm:-left-16',
+    'bottom-1/3 -right-6 sm:-right-14',
+  ];
+
+  const tagIcons = [InstagramIcon, FacebookIcon, Award, Share2, TrendingUp, Rocket];
+
+  const tags = (content?.dmTags && content.dmTags.length > 0) ? content.dmTags : defaultTags;
+
+  const defaultFeatures = [
+    { num: '01', title: 'Social Media Launchpad', desc: 'Create viral reels, aesthetic grid layouts, and targeted campaign funnels for your studio.' },
+    { num: '02', title: 'Personal Branding', desc: 'Position yourself as an authority fashion designer or interior consultant in your region.' },
+    { num: '03', title: 'Client Acquisition', desc: 'Learn how to quote design fees, win commercial projects, and close high-value clients.' },
+  ];
+
+  const features = (content?.dmFeatures && content.dmFeatures.length > 0) ? content.dmFeatures : defaultFeatures;
 
   return (
     <section className="relative py-24 bg-[#F8F7F3] text-[#0B0B0D] overflow-hidden">
@@ -89,7 +110,7 @@ export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = () =
           className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#1749C6] text-white text-xs font-mono font-bold tracking-widest uppercase mb-6 shadow-xl shadow-blue-600/20"
         >
           <Sparkles className="w-4 h-4 text-[#FFB800]" />
-          <span>EXCLUSIVE DIFFERENTIATOR • INCLUDED IN ALL DIPLOMAS</span>
+          <span>{content?.dmTitle || 'EXCLUSIVE DIFFERENTIATOR • INCLUDED IN ALL DIPLOMAS'}</span>
         </motion.div>
 
         {/* Main Headline */}
@@ -100,40 +121,43 @@ export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = () =
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tighter leading-[0.92] max-w-4xl mx-auto text-[#0B0B0D]"
         >
-          DON&apos;T JUST DESIGN.{' '}
-          <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#F20D63] via-[#1749C6] to-[#0B0B0D]">
-            LEARN TO MARKET IT.
-          </span>
+          {content?.dmHeadline || "DON'T JUST DESIGN."}{' '}
+          {content?.dmHighlightWord && (
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#F20D63] via-[#1749C6] to-[#0B0B0D]">
+              {content.dmHighlightWord}
+            </span>
+          )}
         </motion.h2>
 
         <p className="text-sm sm:text-base text-neutral-700 max-w-2xl mx-auto mt-6 font-medium leading-relaxed">
-          Most design institutes stop at teaching creation. At SW Institute, we equip every student with full-stack digital marketing—so you can launch your label, attract premium clients, and build an online empire.
+          {content?.dmDescription || 'Most design institutes stop at teaching creation. At SW Institute, we equip every student with full-stack digital marketing—so you can launch your label, attract premium clients, and build an online empire.'}
         </p>
 
         {/* Floating Tags Around Workspace Composition */}
         <div className="relative max-w-4xl mx-auto mt-16 px-6 sm:px-8 md:px-10 lg:px-12">
           <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl bg-white group">
             <img
-              src="/images/digital_marketing_laptop.jpg"
+              src={content?.dmImage || '/images/digital_marketing_laptop.jpg'}
               alt="Digital Marketing Workspace SW Institute"
               className="w-full h-[340px] sm:h-[480px] object-cover group-hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D]/90 via-transparent to-transparent p-6 sm:p-10 flex flex-col justify-end text-left">
               <span className="text-xs font-mono text-[#FFB800] tracking-widest uppercase font-bold">
-                DIGITAL PROMOTION & BRANDING STUDIO
+                {content?.dmBadgeTitle || 'DIGITAL PROMOTION & BRANDING STUDIO'}
               </span>
               <h3 className="text-2xl sm:text-4xl font-black uppercase text-white mt-1">
-                Market Your Vision. Build Your Empire.
+                {content?.dmBadgeHeading || 'Market Your Vision. Build Your Empire.'}
               </h3>
             </div>
           </div>
 
           {/* Floating Orbiting Skill Tags */}
           {tags.map((tag, idx) => {
-            const Icon = tag.icon;
+            const Icon = tagIcons[idx % tagIcons.length] || Share2;
+            const pos = positions[idx % positions.length];
             return (
               <motion.div
-                key={tag.label}
+                key={tag.label + idx}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -149,8 +173,8 @@ export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = () =
                   duration: 0.5,
                   delay: idx * 0.1,
                 }}
-                className={`absolute ${tag.pos} z-20 hidden sm:flex items-center gap-2.5 px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider shadow-2xl border-2 border-[#0B0B0D] cursor-pointer hover:scale-110 transition-transform`}
-                style={{ backgroundColor: tag.color, color: tag.textColor }}
+                className={`absolute ${pos} z-20 hidden sm:flex items-center gap-2.5 px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider shadow-2xl border-2 border-[#0B0B0D] cursor-pointer hover:scale-110 transition-transform`}
+                style={{ backgroundColor: tag.color || '#F20D63', color: tag.textColor || '#FFFFFF' }}
               >
                 <Icon className="w-4 h-4 fill-current" />
                 <span>{tag.label}</span>
@@ -161,27 +185,24 @@ export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = () =
 
         {/* Bottom Feature Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mt-16 text-left">
-          <div className="p-6 rounded-2xl bg-white border border-neutral-200 hover:border-[#F20D63] shadow-lg transition-colors">
-            <span className="text-2xl font-black text-[#F20D63] block mb-2">01</span>
-            <h4 className="font-black text-sm uppercase text-[#0B0B0D]">Social Media Launchpad</h4>
-            <p className="text-xs text-neutral-600 mt-1 font-medium">
-              Create viral reels, aesthetic grid layouts, and targeted campaign funnels for your studio.
-            </p>
-          </div>
-          <div className="p-6 rounded-2xl bg-white border border-neutral-200 hover:border-[#1749C6] shadow-lg transition-colors">
-            <span className="text-2xl font-black text-[#1749C6] block mb-2">02</span>
-            <h4 className="font-black text-sm uppercase text-[#0B0B0D]">Personal Branding</h4>
-            <p className="text-xs text-neutral-600 mt-1 font-medium">
-              Position yourself as an authority fashion designer or interior consultant in your region.
-            </p>
-          </div>
-          <div className="p-6 rounded-2xl bg-white border border-neutral-200 hover:border-[#FFB800] shadow-lg transition-colors">
-            <span className="text-2xl font-black text-[#FFB800] block mb-2">03</span>
-            <h4 className="font-black text-sm uppercase text-[#0B0B0D]">Client Acquisition</h4>
-            <p className="text-xs text-neutral-600 mt-1 font-medium">
-              Learn how to quote design fees, win commercial projects, and close high-value clients.
-            </p>
-          </div>
+          {features.map((feature, idx) => {
+            const accentColors = ['#F20D63', '#1749C6', '#FFB800'];
+            const accent = accentColors[idx % accentColors.length];
+            return (
+              <div
+                key={feature.num || idx}
+                className="p-6 rounded-2xl bg-white border border-neutral-200 hover:border-[#F20D63] shadow-lg transition-colors"
+              >
+                <span className="text-2xl font-black block mb-2" style={{ color: accent }}>
+                  {feature.num || `0${idx + 1}`}
+                </span>
+                <h4 className="font-black text-sm uppercase text-[#0B0B0D]">{feature.title}</h4>
+                <p className="text-xs text-neutral-600 mt-1 font-medium">
+                  {feature.desc}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

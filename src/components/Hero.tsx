@@ -28,9 +28,9 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
   }, []);
 
   const floatingTags = [
-    { label: '★ DIGITAL MARKETING INCLUDED', color: '#FFB800', textColor: '#0B0B0D', pos: '-top-6 -right-4 sm:-right-8' },
-    { label: 'FASHION & STYLING LAB', color: '#F20D63', textColor: '#FFFFFF', pos: 'bottom-12 -left-6 sm:-left-12' },
-    { label: '3D SPATIAL VISUALIZATION', color: '#1749C6', textColor: '#FFFFFF', pos: 'top-1/3 -right-6 sm:-right-12' },
+    { label: content.heroTag1 || '★ DIGITAL MARKETING INCLUDED', color: '#FFB800', textColor: '#0B0B0D', pos: '-top-6 -right-4 sm:-right-8' },
+    { label: content.heroTag2 || 'FASHION & STYLING LAB', color: '#F20D63', textColor: '#FFFFFF', pos: 'bottom-12 -left-6 sm:-left-12' },
+    { label: content.heroTag3 || '3D SPATIAL VISUALIZATION', color: '#1749C6', textColor: '#FFFFFF', pos: 'top-1/3 -right-6 sm:-right-12' },
   ];
 
   return (
@@ -98,20 +98,43 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="font-black tracking-tighter uppercase leading-[0.86] text-5xl sm:text-7xl md:text-8xl xl:text-[5.8rem]"
           >
-            <span className="block text-[#0B0B0D]">DESIGN</span>
-            <div className="relative inline-block my-1.5">
-              {/* Pink Highlight Brush Behind */}
-              <motion.span
-                initial={{ width: 0 }}
-                animate={{ width: '100%' }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="absolute left-0 bottom-1 top-2 bg-[#F20D63] -rotate-1 rounded-sm transform -z-10 shadow-md"
-              />
-              <span className="text-white px-2">YOUR FUTURE.</span>
-            </div>
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#0B0B0D] via-[#1749C6] to-[#0B0B0D]">
-              BUILD YOUR BRAND.
-            </span>
+            {content.heroHeading ? (
+              <span className="block text-[#0B0B0D] leading-tight">
+                {content.heroHighlightWord && content.heroHeading.includes(content.heroHighlightWord) ? (
+                  <>
+                    <span>{content.heroHeading.split(content.heroHighlightWord)[0]}</span>
+                    <div className="relative inline-block my-1.5 mx-1">
+                      <motion.span
+                        initial={{ width: 0 }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                        className="absolute left-0 bottom-1 top-2 bg-[#F20D63] -rotate-1 rounded-sm transform -z-10 shadow-md"
+                      />
+                      <span className="text-white px-2">{content.heroHighlightWord}</span>
+                    </div>
+                    <span>{content.heroHeading.split(content.heroHighlightWord)[1]}</span>
+                  </>
+                ) : (
+                  content.heroHeading
+                )}
+              </span>
+            ) : (
+              <>
+                <span className="block text-[#0B0B0D]">DESIGN</span>
+                <div className="relative inline-block my-1.5">
+                  <motion.span
+                    initial={{ width: 0 }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                    className="absolute left-0 bottom-1 top-2 bg-[#F20D63] -rotate-1 rounded-sm transform -z-10 shadow-md"
+                  />
+                  <span className="text-white px-2">YOUR FUTURE.</span>
+                </div>
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#0B0B0D] via-[#1749C6] to-[#0B0B0D]">
+                  BUILD YOUR BRAND.
+                </span>
+              </>
+            )}
           </motion.div>
 
           {/* Institute Subheading */}
@@ -126,8 +149,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
               <span className="w-2 h-2 rounded-full bg-[#1749C6]" />
             </h2>
             <p className="text-sm sm:text-base text-neutral-700 max-w-xl font-medium leading-relaxed">
-              Fashion Designing • Interior Designing • <span className="font-bold text-[#F20D63]">Digital Marketing Included</span> in All Programs.
-              Craft your portfolio, launch your label, and rule your market in Bhilai.
+              {content.tagline || 'Fashion Designing • Interior Designing • Digital Marketing Included in All Programs.'}
             </p>
           </motion.div>
 
@@ -143,7 +165,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
               data-cursor="EXPLORE"
               className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-[#0B0B0D] text-white font-black text-xs uppercase tracking-widest hover:bg-[#F20D63] transition-all duration-300 shadow-xl shadow-black/15 hover:shadow-pink-500/25 active:scale-95 overflow-hidden"
             >
-              <span className="relative z-10">EXPLORE PROGRAMS</span>
+              <span className="relative z-10">{content.heroCtaExplore || 'EXPLORE PROGRAMS'}</span>
               <ArrowRight className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
             </a>
 
@@ -152,7 +174,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
               data-cursor="ENQUIRE"
               className="group flex items-center gap-3 px-8 py-4 rounded-full bg-white text-[#0B0B0D] border-2 border-[#0B0B0D] font-black text-xs uppercase tracking-widest hover:bg-[#1749C6] hover:text-white hover:border-[#1749C6] transition-all duration-300 shadow-md active:scale-95 cursor-pointer"
             >
-              <span>ENQUIRE NOW</span>
+              <span>{content.heroCtaEnquire || 'ENQUIRE NOW'}</span>
               <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
           </motion.div>
@@ -166,11 +188,11 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
           >
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#F20D63]" />
-              <span>100% Practical Exposure</span>
+              <span>{content.stat1Val || '100%'} {content.stat1Label || 'Practical Exposure'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Flame className="w-4 h-4 text-[#FFB800]" />
-              <span>Digital Marketing Included</span>
+              <span>Digital Marketing {content.stat2Val || 'Included'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Compass className="w-4 h-4 text-[#1749C6]" />
@@ -197,7 +219,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
             className="absolute left-0 top-4 w-[72%] h-[76%] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-white group"
           >
             <img
-              src="/images/hero_interior_render.jpg"
+              src={content.heroImage1 || '/images/hero_interior_render.jpg'}
               alt="Interior Architectural Design Studio SW"
               className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
             />
@@ -220,7 +242,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
             className="absolute right-0 bottom-4 w-[76%] h-[84%] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-white group z-20"
           >
             <img
-              src="/images/hero_fashion_model.jpg"
+              src={content.heroImage2 || '/images/hero_fashion_model.jpg'}
               alt="Fashion Designing Studio SW"
               className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
             />

@@ -13,7 +13,7 @@ interface AboutSectionProps {
 export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
 
-  const pillars = [
+  const defaultPillars = [
     {
       id: '01',
       title: 'DESIGN THINKING',
@@ -46,6 +46,9 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
     },
   ];
 
+  const pillars = (content.aboutPillars && content.aboutPillars.length > 0) ? content.aboutPillars : defaultPillars;
+  const currentPillar = pillars[activeTab] || pillars[0];
+
   return (
     <section id="about" className="relative py-24 bg-[#F8F7F3] text-[#0B0B0D] overflow-hidden">
       {/* Explicit Fashion & Interior Background Vector Illustrations */}
@@ -66,10 +69,12 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
               <span>{content.aboutTitle}</span>
             </div>
             <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight max-w-3xl leading-[0.95] text-[#0B0B0D]">
-              WE DON&apos;T JUST TEACH DESIGN.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F20D63] via-[#1749C6] to-[#0B0B0D]">
-                WE SHAPE CREATORS.
-              </span>
+              {content.aboutHeadline || "WE DON'T JUST TEACH DESIGN."}{' '}
+              {content.aboutHighlightWord && (
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F20D63] via-[#1749C6] to-[#0B0B0D]">
+                  {content.aboutHighlightWord}
+                </span>
+              )}
             </h2>
           </div>
 
@@ -140,7 +145,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
           <div className="lg:col-span-6 relative h-[420px] sm:h-[520px] w-full rounded-3xl overflow-hidden border-4 border-white shadow-2xl bg-white group">
             <AnimatePresence mode="wait">
               <motion.div
-                key={pillars[activeTab].id}
+                key={currentPillar.id}
                 initial={{ opacity: 0, scale: 1.05 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
@@ -148,20 +153,20 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
                 className="absolute inset-0"
               >
                 <img
-                  src={pillars[activeTab].image}
-                  alt={pillars[activeTab].title}
+                  src={currentPillar.image}
+                  alt={currentPillar.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D]/90 via-transparent to-transparent p-8 flex flex-col justify-end">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 text-[#0B0B0D] text-xs font-mono font-bold tracking-widest uppercase mb-2 self-start shadow-md">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#F20D63]" />
-                    <span>{pillars[activeTab].badge}</span>
+                    <span>{currentPillar.badge}</span>
                   </div>
                   <h4 className="text-2xl sm:text-3xl font-black uppercase text-white">
-                    {pillars[activeTab].title}
+                    {currentPillar.title}
                   </h4>
                   <p className="text-xs text-neutral-200 mt-1 max-w-lg">
-                    {pillars[activeTab].subtitle}
+                    {currentPillar.subtitle}
                   </p>
                 </div>
               </motion.div>

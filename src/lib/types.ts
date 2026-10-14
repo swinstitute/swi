@@ -67,6 +67,56 @@ export interface FirebaseSettings {
   appId?: string;
 }
 
+export interface AboutPillar {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  badge: string;
+  color: string;
+}
+
+export interface DMFeature {
+  num: string;
+  title: string;
+  desc: string;
+}
+
+export interface DMTag {
+  label: string;
+  color: string;
+  textColor: string;
+}
+
+export interface WhySWReason {
+  num: string;
+  title: string;
+  tagline: string;
+  description: string;
+  color: string;
+}
+
+export interface ExperienceStage {
+  stage: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  color: string;
+}
+
+export interface EligibilityCategory {
+  title: string;
+  desc: string;
+}
+
+export interface AdmissionsInclusion {
+  title: string;
+  subtitle: string;
+  color: string;
+}
+
 export interface SiteContent {
   // Integrations & Cloud Config
   imgbbApiKey?: string;
@@ -79,8 +129,9 @@ export interface SiteContent {
   logos: SiteLogos;
   sectionOrder: SectionConfig[];
 
-  // Hero Section
+  // 1. Hero Section
   heroHeading: string;
+  heroHighlightWord?: string;
   heroSubheading: string;
   tagline: string;
   announcement: string;
@@ -89,34 +140,75 @@ export interface SiteContent {
   heroTag3: string;
   heroImage1: string;
   heroImage2: string;
+  heroCtaExplore?: string;
+  heroCtaEnquire?: string;
 
-  // About Section
+  // 2. About Section
   aboutTitle: string;
   aboutHeadline: string;
+  aboutHighlightWord?: string;
   aboutStory: string;
   stat1Label: string;
   stat1Val: string;
   stat2Label: string;
   stat2Val: string;
+  aboutPillars?: AboutPillar[];
 
-  // Programs Section
+  // 3. Programs Section
   programsTitle: string;
   programsSubheading: string;
 
-  // Digital Marketing Section
+  // 4. Digital Marketing Section
   dmTitle: string;
   dmHeadline: string;
+  dmHighlightWord?: string;
   dmDescription: string;
+  dmImage?: string;
+  dmBadgeTitle?: string;
+  dmBadgeHeading?: string;
+  dmFeatures?: DMFeature[];
+  dmTags?: DMTag[];
 
-  // Why SW Section
+  // 5. Why SW Section
   whySWTitle: string;
   whySWHeadline: string;
+  whySWHighlightWord?: string;
+  whySWSubtitle?: string;
+  whySWReasons?: WhySWReason[];
 
-  // Contact Info & Admissions
+  // 6. Experience Timeline (6 Stages)
+  experienceTitle?: string;
+  experienceHeadline?: string;
+  experienceHighlightWord?: string;
+  experienceSubtitle?: string;
+  experienceStages?: ExperienceStage[];
+
+  // 7. Who Can Apply & Eligibility
+  eligibilityTitle?: string;
+  eligibilityHeadline?: string;
+  eligibilityHighlightWord?: string;
+  eligibilityBadge?: string;
+  eligibilityCategories?: EligibilityCategory[];
+  eligibilityHighlights?: string[];
+
+  // 8. Admissions Callout Section
+  admissionsBadge?: string;
+  admissionsHeadline?: string;
+  admissionsHighlightWord?: string;
+  admissionsDescription?: string;
+  admissionsButtonText?: string;
+  admissionsImage?: string;
+  admissionsInclusions?: AdmissionsInclusion[];
+
+  // 9. Contact Info & Admissions
+  contactTitle?: string;
+  contactHeadline?: string;
   contactPhone: string;
   contactWhatsapp: string;
   contactEmail: string;
   contactAddress: string;
+  contactMapEmbedUrl?: string;
+  contactMapLink?: string;
   admissionsOpen: boolean;
   academicYear: string;
 

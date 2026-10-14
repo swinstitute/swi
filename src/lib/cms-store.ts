@@ -90,8 +90,9 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   },
   sectionOrder: INITIAL_SECTIONS,
 
-  // Hero Section
+  // 1. Hero Section
   heroHeading: 'DESIGN YOUR FUTURE. BUILD YOUR BRAND.',
+  heroHighlightWord: 'YOUR FUTURE.',
   heroSubheading: 'South West Institute of Design and Innovation',
   tagline: 'LEARN. CREATE. GROW. LEAD YOUR WORLD.',
   announcement: 'Admissions Open 2026–2027 • Limited Seats Available',
@@ -100,35 +101,229 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   heroTag3: '3D SPATIAL VISUALIZATION',
   heroImage1: '/images/hero_interior_render.jpg',
   heroImage2: '/images/hero_fashion_model.jpg',
+  heroCtaExplore: 'EXPLORE PROGRAMS',
+  heroCtaEnquire: 'ENQUIRE NOW',
 
-  // About Section
+  // 2. About Section
   aboutTitle: 'WHO WE ARE',
   aboutHeadline: "We don't just teach design. We shape creators and future-ready leaders.",
+  aboutHighlightWord: 'WE SHAPE CREATORS.',
   aboutStory:
     'South West Institute of Design and Innovation is a premier institute dedicated to nurturing creative minds. We believe in holistic education that combines creative design skills with real-world digital marketing knowledge to empower you to launch your career or build your own brand with confidence.',
   stat1Label: 'Practical Exposure',
   stat1Val: '100%',
   stat2Label: 'Digital Marketing',
   stat2Val: 'Included',
+  aboutPillars: [
+    {
+      id: '01',
+      title: 'DESIGN THINKING',
+      subtitle: 'Nurturing Originality & Creative Problem Solving',
+      description:
+        'We teach you how to conceptualize from raw inspiration to finished masterpiece. Develop your distinct creative voice through sketch ideation, material experimentation, and spatial aesthetics.',
+      image: '/images/hero_fashion_model.jpg',
+      badge: 'FASHION & CONCEPT',
+      color: '#F20D63',
+    },
+    {
+      id: '02',
+      title: 'PRACTICAL LEARNING',
+      subtitle: 'Real Projects, Live Studios & Industry Exposure',
+      description:
+        'Say goodbye to purely theoretical education. Work on real residential space planning, haute couture draping, site visits, materials workshops, and live photoshoots from day one.',
+      image: '/images/hero_interior_render.jpg',
+      badge: 'SPATIAL & LIVE SITES',
+      color: '#1749C6',
+    },
+    {
+      id: '03',
+      title: 'DIGITAL EXCELLENCE',
+      subtitle: 'Integrated Marketing & Personal Brand Building',
+      description:
+        'Great design deserves to be seen. Every student learns social media promotion, portfolio presentation, Instagram brand strategy, and client acquisition alongside core design skills.',
+      image: '/images/digital_marketing_laptop.jpg',
+      badge: 'BRANDING & MARKETING',
+      color: '#FFB800',
+    },
+  ],
 
-  // Programs Section
+  // 3. Programs Section
   programsTitle: 'EXPLORE OUR DIPLOMA PROGRAMS',
   programsSubheading: 'Industry-aligned hands-on programs designed to take you from foundational sketching to full brand launch.',
 
-  // Digital Marketing Section
+  // 4. Digital Marketing Section
   dmTitle: 'DIGITAL MARKETING INCLUDED',
   dmHeadline: 'BECAUSE GREAT DESIGN DESERVES AN AUDIENCE.',
-  dmDescription: 'Every program at SW Institute comes with embedded Digital Marketing training. Learn how to launch your personal brand, run ad campaigns, build an Instagram portfolio, and get high-paying clients.',
+  dmHighlightWord: 'LEARN TO MARKET IT.',
+  dmDescription:
+    'Most design institutes stop at teaching creation. At SW Institute, we equip every student with full-stack digital marketing—so you can launch your label, attract premium clients, and build an online empire.',
+  dmImage: '/images/digital_marketing_laptop.jpg',
+  dmBadgeTitle: 'DIGITAL PROMOTION & BRANDING STUDIO',
+  dmBadgeHeading: 'Market Your Vision. Build Your Empire.',
+  dmFeatures: [
+    { num: '01', title: 'Social Media Launchpad', desc: 'Create viral reels, aesthetic grid layouts, and targeted campaign funnels for your studio.' },
+    { num: '02', title: 'Personal Branding', desc: 'Position yourself as an authority fashion designer or interior consultant in your region.' },
+    { num: '03', title: 'Client Acquisition', desc: 'Learn how to quote design fees, win commercial projects, and close high-value clients.' },
+  ],
+  dmTags: [
+    { label: 'Instagram Growth', color: '#F20D63', textColor: '#FFFFFF' },
+    { label: 'Facebook Ads', color: '#1749C6', textColor: '#FFFFFF' },
+    { label: 'Personal Branding', color: '#FFB800', textColor: '#0B0B0D' },
+    { label: 'Social Media Strategy', color: '#0B0B0D', textColor: '#FFFFFF' },
+    { label: 'Content Creation', color: '#F20D63', textColor: '#FFFFFF' },
+    { label: 'Client Acquisition', color: '#1749C6', textColor: '#FFFFFF' },
+  ],
 
-  // Why SW Section
+  // 5. Why SW Section
   whySWTitle: 'WHY CHOOSE SW INSTITUTE',
   whySWHeadline: 'BUILT FOR CREATORS WHO WANT TO WIN.',
+  whySWHighlightWord: 'SW INSTITUTE?',
+  whySWSubtitle: 'Designed for ambitious creators who demand more than a traditional degree. We combine artistry, technology, and business acumen.',
+  whySWReasons: [
+    {
+      num: '01',
+      title: 'PRACTICAL LEARNING',
+      tagline: 'Real projects. Live studio skills.',
+      description:
+        'Ditch abstract theory. You work on live architectural blueprints, fabric draping, client briefs, and real construction materials from week one.',
+      color: '#F20D63',
+    },
+    {
+      num: '02',
+      title: 'INDUSTRY EXPOSURE',
+      tagline: 'Learn beyond the classroom.',
+      description:
+        'Site visits to luxury interior spaces, fashion runway shows, textile mill walkthroughs, and commercial photography studios.',
+      color: '#1749C6',
+    },
+    {
+      num: '03',
+      title: 'EXPERT MENTORSHIP',
+      tagline: 'Guidance from active professionals.',
+      description:
+        'Our faculty members are practicing interior architects, celebrity fashion stylists, and digital marketing agency strategists.',
+      color: '#FFB800',
+    },
+    {
+      num: '04',
+      title: 'ENTREPRENEURSHIP MINDSET',
+      tagline: 'Launch your own studio or brand.',
+      description:
+        'We don’t just train employees; we train founders. Learn pricing, client contract drafting, personal branding, and studio setup.',
+      color: '#F20D63',
+    },
+    {
+      num: '05',
+      title: 'CAREER & PLACEMENT SUPPORT',
+      tagline: 'Internships and professional portfolio.',
+      description:
+        'Graduate with an Awwwards-worthy physical and digital portfolio. Direct internship placements with top design firms in CG and nationwide.',
+      color: '#1749C6',
+    },
+  ],
 
-  // Contact Info
+  // 6. Experience Timeline (6 Stages)
+  experienceTitle: 'THE STUDENT JOURNEY',
+  experienceHeadline: 'THE SW EXPERIENCE',
+  experienceHighlightWord: 'SW EXPERIENCE',
+  experienceSubtitle: 'From your very first sketch to launching your brand online—experience a structured, 6-stage transformation.',
+  experienceStages: [
+    {
+      stage: '01. DISCOVER',
+      title: 'CREATIVE ORIENTATION',
+      subtitle: 'Unlocking Design Thinking & Vision',
+      description:
+        'Begin your journey with immersive creative workshops. Explore color theory, moodboards, architectural fundamentals, and fashion silhouettes.',
+      image: '/images/hero_fashion_model.jpg',
+      color: '#F20D63',
+    },
+    {
+      stage: '02. LEARN',
+      title: 'FOUNDATIONAL MASTERY',
+      subtitle: 'Technical Sketching & CAD Visualization',
+      description:
+        'Master the tools of the trade. Learn garment pattern drafting, 2D/3D interior CAD rendering, fabric science, and spatial lighting composition.',
+      image: '/images/hero_interior_render.jpg',
+      color: '#1749C6',
+    },
+    {
+      stage: '03. CREATE',
+      title: 'HANDS-ON STUDIO PRODUCTION',
+      subtitle: 'Material Draping & 3D Spatial Models',
+      description:
+        'Step into our live design lab. Bring your concepts to life through garment stitching, upholstery selection, and prototype construction.',
+      image: '/images/digital_marketing_laptop.jpg',
+      color: '#FFB800',
+    },
+    {
+      stage: '04. PRACTICE',
+      title: 'LIVE SITE & INDUSTRY EXPOSURE',
+      subtitle: 'Real Client Briefs & Photoshoots',
+      description:
+        'Work on active residential interior sites and direct fashion runway shoots. Get real feedback from industry leaders and client mentors.',
+      image: '/images/hero_interior_render.jpg',
+      color: '#F20D63',
+    },
+    {
+      stage: '05. BUILD',
+      title: 'DIGITAL MARKETING INTEGRATION',
+      subtitle: 'Social Strategy & Personal Branding',
+      description:
+        'Learn social media content creation, Instagram marketing, targeted ad campaigns, and brand identity so your work reaches paying clients.',
+      image: '/images/digital_marketing_laptop.jpg',
+      color: '#1749C6',
+    },
+    {
+      stage: '06. LAUNCH',
+      title: 'GRADUATION & STUDIO LAUNCH',
+      subtitle: 'Portfolio Showcase & Placement',
+      description:
+        'Showcase your final collection at the annual SW Institute Design Exhibition. Graduate ready to open your studio or join top design firms.',
+      image: '/images/hero_fashion_model.jpg',
+      color: '#FFB800',
+    },
+  ],
+
+  // 7. Who Can Apply & Eligibility
+  eligibilityTitle: 'STUDIO ELIGIBILITY & ENROLMENT',
+  eligibilityHeadline: 'WHO CAN ENQUIRE & JOIN?',
+  eligibilityHighlightWord: 'ENQUIRE & JOIN?',
+  eligibilityBadge: 'ANYONE WHO HAS PASSED 10TH OR 12TH — NO MATTER YOUR AGE!',
+  eligibilityCategories: [
+    { title: 'School Passouts', desc: '10th or 12th completed students ready for a creative career.' },
+    { title: 'Career Switchers', desc: 'Professionals moving into fashion or interior design.' },
+    { title: 'Working Professionals', desc: 'Upskilling in digital marketing and space visualization.' },
+    { title: 'Creative Enthusiasts', desc: 'Homemakers and entrepreneurs launching their studio.' },
+  ],
+  eligibilityHighlights: [
+    'No Prior Portfolio Required',
+    'Flexible Morning & Afternoon Batches',
+    'Free Personal Brand Counseling',
+  ],
+
+  // 8. Admissions Callout Section
+  admissionsBadge: 'ADMISSIONS OPEN 2026 – 2027',
+  admissionsHeadline: 'YOUR PASSION. YOUR FUTURE. YOUR BRAND.',
+  admissionsHighlightWord: 'YOUR FUTURE.',
+  admissionsDescription:
+    'Take the decisive step toward your creative career. Enroll in our industry-ready Diploma programs with digital marketing included.',
+  admissionsButtonText: 'ENQUIRE ABOUT 2026 BATCHES',
+  admissionsImage: '/images/hero_fashion_model.jpg',
+  admissionsInclusions: [
+    { title: 'Diploma in Fashion Designing', subtitle: 'Sketching, pattern drafting, draping & styling', color: '#F20D63' },
+    { title: 'Diploma in Interior Designing', subtitle: 'Space planning, 3D visualization & furniture design', color: '#1749C6' },
+    { title: 'Digital Marketing Included', subtitle: 'Social media growth, branding & client acquisition', color: '#FFB800' },
+  ],
+
+  // 9. Contact Info & Admissions
+  contactTitle: 'VISIT OUR BHILAI CAMPUS',
+  contactHeadline: 'CAMPUS LOCATION & STUDIO DESK',
   contactPhone: '+91 99939 97767',
   contactWhatsapp: '+91 77729 92592',
   contactEmail: 'garvproduction.help@gmail.com',
   contactAddress: 'Beside Panch Mandir, Near Friends Cafe, Gurunanak Market, Vaishali Nagar, Bhilai, Chhattisgarh',
+  contactMapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.123456789!2d81.332308!3d21.216391!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28cddddddddddd%3A0x0!2sGurunanak+Market%2C+Vaishali+Nagar%2C+Bhilai%2C+Chhattisgarh!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin',
+  contactMapLink: 'https://maps.google.com/?q=Gurunanak+Market+Vaishali+Nagar+Bhilai',
   admissionsOpen: true,
   academicYear: '2026 - 2027',
 };
@@ -281,6 +476,30 @@ export const getStoredContent = (): SiteContent => {
     return {
       ...INITIAL_SITE_CONTENT,
       ...parsed,
+      aboutPillars: Array.isArray(parsed.aboutPillars) && parsed.aboutPillars.length > 0
+        ? parsed.aboutPillars
+        : INITIAL_SITE_CONTENT.aboutPillars,
+      dmFeatures: Array.isArray(parsed.dmFeatures) && parsed.dmFeatures.length > 0
+        ? parsed.dmFeatures
+        : INITIAL_SITE_CONTENT.dmFeatures,
+      dmTags: Array.isArray(parsed.dmTags) && parsed.dmTags.length > 0
+        ? parsed.dmTags
+        : INITIAL_SITE_CONTENT.dmTags,
+      whySWReasons: Array.isArray(parsed.whySWReasons) && parsed.whySWReasons.length > 0
+        ? parsed.whySWReasons
+        : INITIAL_SITE_CONTENT.whySWReasons,
+      experienceStages: Array.isArray(parsed.experienceStages) && parsed.experienceStages.length > 0
+        ? parsed.experienceStages
+        : INITIAL_SITE_CONTENT.experienceStages,
+      eligibilityCategories: Array.isArray(parsed.eligibilityCategories) && parsed.eligibilityCategories.length > 0
+        ? parsed.eligibilityCategories
+        : INITIAL_SITE_CONTENT.eligibilityCategories,
+      eligibilityHighlights: Array.isArray(parsed.eligibilityHighlights) && parsed.eligibilityHighlights.length > 0
+        ? parsed.eligibilityHighlights
+        : INITIAL_SITE_CONTENT.eligibilityHighlights,
+      admissionsInclusions: Array.isArray(parsed.admissionsInclusions) && parsed.admissionsInclusions.length > 0
+        ? parsed.admissionsInclusions
+        : INITIAL_SITE_CONTENT.admissionsInclusions,
       imgbbApiKey: parsed.imgbbApiKey || INITIAL_SITE_CONTENT.imgbbApiKey,
       firebaseConfig: { ...INITIAL_SITE_CONTENT.firebaseConfig, ...(parsed.firebaseConfig || {}) },
       logos: {

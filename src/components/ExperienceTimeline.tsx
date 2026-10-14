@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Compass, BookOpen, Palette, Cpu, Rocket, Trophy } from 'lucide-react';
 
-export const ExperienceTimeline: React.FC = () => {
+import { SiteContent } from '@/lib/types';
+
+export const ExperienceTimeline: React.FC<{ content?: SiteContent }> = ({ content }) => {
   const [activeStep, setActiveStep] = useState(0);
 
-  const steps = [
+  const defaultSteps = [
     {
       stage: '01. DISCOVER',
       title: 'CREATIVE ORIENTATION',
@@ -15,7 +17,6 @@ export const ExperienceTimeline: React.FC = () => {
       description:
         'Begin your journey with immersive creative workshops. Explore color theory, moodboards, architectural fundamentals, and fashion silhouettes.',
       image: '/images/hero_fashion_model.jpg',
-      icon: Compass,
       color: '#F20D63',
     },
     {
@@ -25,7 +26,6 @@ export const ExperienceTimeline: React.FC = () => {
       description:
         'Master the tools of the trade. Learn garment pattern drafting, 2D/3D interior CAD rendering, fabric science, and spatial lighting composition.',
       image: '/images/hero_interior_render.jpg',
-      icon: BookOpen,
       color: '#1749C6',
     },
     {
@@ -35,7 +35,6 @@ export const ExperienceTimeline: React.FC = () => {
       description:
         'Step into our live design lab. Bring your concepts to life through garment stitching, upholstery selection, and prototype construction.',
       image: '/images/digital_marketing_laptop.jpg',
-      icon: Palette,
       color: '#FFB800',
     },
     {
@@ -45,7 +44,6 @@ export const ExperienceTimeline: React.FC = () => {
       description:
         'Work on active residential interior sites and direct fashion runway shoots. Get real feedback from industry leaders and client mentors.',
       image: '/images/hero_interior_render.jpg',
-      icon: Cpu,
       color: '#F20D63',
     },
     {
@@ -55,7 +53,6 @@ export const ExperienceTimeline: React.FC = () => {
       description:
         'Learn social media content creation, Instagram marketing, targeted ad campaigns, and brand identity so your work reaches paying clients.',
       image: '/images/digital_marketing_laptop.jpg',
-      icon: Rocket,
       color: '#1749C6',
     },
     {
@@ -65,10 +62,15 @@ export const ExperienceTimeline: React.FC = () => {
       description:
         'Showcase your final collection at the annual SW Institute Design Exhibition. Graduate ready to open your studio or join top design firms.',
       image: '/images/hero_fashion_model.jpg',
-      icon: Trophy,
       color: '#FFB800',
     },
   ];
+
+  const steps = (content?.experienceStages && content.experienceStages.length > 0)
+    ? content.experienceStages
+    : defaultSteps;
+
+  const currentStep = steps[activeStep] || steps[0];
 
   return (
     <section id="experience" className="relative py-24 bg-[#F8F7F3] text-[#0B0B0D] overflow-hidden">
@@ -78,14 +80,19 @@ export const ExperienceTimeline: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-mono text-[#F20D63] tracking-widest uppercase mb-3">
               <Sparkles className="w-4 h-4" />
-              <span>THE STUDENT JOURNEY</span>
+              <span>{content?.experienceTitle || 'THE STUDENT JOURNEY'}</span>
             </div>
             <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
-              THE <span className="text-[#F20D63]">SW EXPERIENCE</span>
+              {content?.experienceHeadline || 'THE'}{' '}
+              {content?.experienceHighlightWord ? (
+                <span className="text-[#F20D63]">{content.experienceHighlightWord}</span>
+              ) : (
+                <span className="text-[#F20D63]">SW EXPERIENCE</span>
+              )}
             </h2>
           </div>
           <p className="text-sm text-neutral-600 max-w-md font-medium">
-            From your very first sketch to launching your brand online—experience a structured, 6-stage transformation.
+            {content?.experienceSubtitle || 'From your very first sketch to launching your brand online—experience a structured, 6-stage transformation.'}
           </p>
         </div>
 
@@ -119,7 +126,7 @@ export const ExperienceTimeline: React.FC = () => {
           <div className="lg:col-span-6 space-y-6">
             <AnimatePresence mode="wait">
               <motion.div
-                key={steps[activeStep].stage}
+                key={currentStep.stage}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
@@ -128,18 +135,18 @@ export const ExperienceTimeline: React.FC = () => {
               >
                 <span
                   className="inline-block px-3.5 py-1 rounded-full text-white text-xs font-mono font-bold tracking-widest uppercase"
-                  style={{ backgroundColor: steps[activeStep].color }}
+                  style={{ backgroundColor: currentStep.color }}
                 >
-                  STAGE {activeStep + 1} OF 6
+                  STAGE {activeStep + 1} OF {steps.length}
                 </span>
                 <h3 className="text-3xl sm:text-5xl font-black uppercase tracking-tight leading-none text-[#0B0B0D]">
-                  {steps[activeStep].title}
+                  {currentStep.title}
                 </h3>
                 <h4 className="text-sm font-bold text-[#1749C6] uppercase tracking-wider">
-                  {steps[activeStep].subtitle}
+                  {currentStep.subtitle}
                 </h4>
                 <p className="text-sm sm:text-base text-neutral-700 leading-relaxed font-medium pt-2">
-                  {steps[activeStep].description}
+                  {currentStep.description}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -148,7 +155,7 @@ export const ExperienceTimeline: React.FC = () => {
           <div className="lg:col-span-6 relative h-[380px] sm:h-[480px] w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-neutral-900">
             <AnimatePresence mode="wait">
               <motion.div
-                key={steps[activeStep].stage}
+                key={currentStep.stage}
                 initial={{ opacity: 0, scale: 1.05 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
@@ -156,15 +163,15 @@ export const ExperienceTimeline: React.FC = () => {
                 className="absolute inset-0"
               >
                 <img
-                  src={steps[activeStep].image}
-                  alt={steps[activeStep].title}
+                  src={currentStep.image}
+                  alt={currentStep.title}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D] via-transparent to-transparent p-8 flex flex-col justify-end text-white">
                   <span className="text-xs font-mono text-[#FFB800] tracking-widest uppercase">
                     PRACTICAL MILESTONE
                   </span>
-                  <h4 className="text-2xl font-black uppercase">{steps[activeStep].title}</h4>
+                  <h4 className="text-2xl font-black uppercase">{currentStep.title}</h4>
                 </div>
               </motion.div>
             </AnimatePresence>

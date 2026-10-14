@@ -62,6 +62,8 @@ import {
   Clock,
   UserCheck,
   MoreVertical,
+  Flame,
+  Award,
 } from 'lucide-react';
 import {
   SiteContent,
@@ -70,6 +72,13 @@ import {
   Enquiry,
   ColorTheme,
   SiteLogos,
+  AboutPillar,
+  DMFeature,
+  DMTag,
+  WhySWReason,
+  ExperienceStage,
+  EligibilityCategory,
+  AdmissionsInclusion,
 } from '@/lib/types';
 import {
   getStoredContent,
@@ -82,6 +91,7 @@ import {
   saveStoredEnquiries,
   COLOR_THEME_PRESETS,
   INITIAL_SECTIONS,
+  INITIAL_SITE_CONTENT,
   applySiteTheme,
 } from '@/lib/cms-store';
 
@@ -96,6 +106,18 @@ type StudioTab =
   | 'gallery'
   | 'settings';
 
+type SectionEditorTab =
+  | 'hero'
+  | 'about'
+  | 'programs'
+  | 'digital-marketing'
+  | 'why-sw'
+  | 'gallery'
+  | 'experience'
+  | 'eligibility'
+  | 'admissions'
+  | 'contact';
+
 export default function SWStudioAdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
@@ -103,6 +125,78 @@ export default function SWStudioAdminPage() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState<StudioTab>('dashboard');
+  const [sectionEditorTab, setSectionEditorTab] = useState<SectionEditorTab>('hero');
+  const [uploadingImageKey, setUploadingImageKey] = useState<string | null>(null);
+
+  const handleImageFieldUpload = async (
+    onSuccess: (url: string) => void,
+    fieldKey: string,
+    file?: File
+  ) => {
+    if (!file) return;
+    setUploadingImageKey(fieldKey);
+    try {
+      const res = await uploadToImgBB(file);
+      if (res.success && res.url) {
+        onSuccess(res.url);
+        setUploadingImageKey(null);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (dataUrl) onSuccess(dataUrl);
+      setUploadingImageKey(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const renderImageUploadField = (
+    label: string,
+    value: string,
+    fieldKey: string,
+    onChange: (val: string) => void
+  ) => (
+    <div className="space-y-1.5">
+      <label className="block text-neutral-300 uppercase font-mono text-[11px] tracking-wider font-bold">
+        {label}
+      </label>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/20 bg-neutral-900 shrink-0 flex items-center justify-center">
+          {value ? (
+            <img src={value} alt={label} className="w-full h-full object-cover" />
+          ) : (
+            <ImageIcon className="w-6 h-6 text-neutral-500" />
+          )}
+        </div>
+        <div className="flex-1 w-full flex items-center gap-2">
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Image URL (CDN, /images/..., or upload file)"
+            className="flex-1 px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs font-mono"
+          />
+          <label className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center gap-1.5 shrink-0 transition-colors">
+            <Upload className="w-3.5 h-3.5" />
+            <span>{uploadingImageKey === fieldKey ? 'Uploading...' : 'Browse'}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageFieldUpload(onChange, fieldKey, file);
+              }}
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
 
   const [livePreview, setLivePreview] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -2157,98 +2251,1607 @@ export default function SWStudioAdminPage() {
               </div>
             )}
 
-            {/* SECTION-WISE COPY EDITOR */}
+            {/* SECTION-WISE IN-DEPTH MASTER EDITOR */}
             {activeTab === 'section-content' && (
-              <div className="space-y-8 max-w-4xl">
-                <div>
-                  <h1 className="text-3xl font-black uppercase">SECTION-WISE CONTENT EDITOR</h1>
-                  <p className="text-xs text-neutral-400 mt-1">
-                    Edit text copy, headlines, subheadings, and imagery for every individual section on the website.
-                  </p>
+              <div className="space-y-8 max-w-5xl">
+                {/* Header & Quick Save */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+                  <div>
+                    <h1 className="text-3xl font-black uppercase text-white flex items-center gap-3">
+                      <span>SECTION-WISE CONTENT EDITOR</span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#F20D63] text-white text-[10px] font-mono font-bold tracking-widest">
+                        IN-DEPTH
+                      </span>
+                    </h1>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      Edit all texts, headlines, buttons, images, badges, and elements for every individual section on the website.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSaveAll}
+                    className="px-6 py-2.5 rounded-full bg-[#F20D63] hover:bg-white hover:text-black text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30 transition-all cursor-pointer shrink-0"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>SAVE & PUBLISH CHANGES</span>
+                  </button>
                 </div>
 
-                {/* Hero Copy */}
-                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
-                  <h3 className="text-lg font-black uppercase text-[#F20D63]">HERO SECTION CONTENT</h3>
-                  <div className="space-y-3 text-xs font-semibold">
-                    <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Main Hero Headline</label>
-                      <input
-                        type="text"
-                        value={siteContent.heroHeading}
-                        onChange={(e) => setSiteContent({ ...siteContent, heroHeading: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Institute Subheading</label>
-                      <input
-                        type="text"
-                        value={siteContent.heroSubheading}
-                        onChange={(e) => setSiteContent({ ...siteContent, heroSubheading: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Top Announcement Badge</label>
-                      <input
-                        type="text"
-                        value={siteContent.announcement}
-                        onChange={(e) => setSiteContent({ ...siteContent, announcement: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white"
-                      />
-                    </div>
-                  </div>
+                {/* Section Navigation Tabs (Pills) */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                  {[
+                    { id: 'hero', label: '1. Hero Banner', icon: Sparkles },
+                    { id: 'about', label: '2. About & Pillars', icon: Layers },
+                    { id: 'programs', label: '3. Diploma Programs', icon: BookOpen },
+                    { id: 'digital-marketing', label: '4. Digital Marketing', icon: Share2 },
+                    { id: 'why-sw', label: '5. Why SW Advantage', icon: Award },
+                    { id: 'gallery', label: '6. Student Showcase', icon: ImageIcon },
+                    { id: 'experience', label: '7. Experience (6 Stages)', icon: Clock },
+                    { id: 'eligibility', label: '8. Eligibility', icon: UserCheck },
+                    { id: 'admissions', label: '9. Admissions Callout', icon: Flame },
+                    { id: 'contact', label: '10. Campus & Contact', icon: Building2 },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = sectionEditorTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setSectionEditorTab(tab.id as SectionEditorTab)}
+                        className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                          isActive
+                            ? 'bg-gradient-to-r from-[#F20D63] to-[#1749C6] text-white shadow-lg shadow-pink-500/20 scale-105'
+                            : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* About Story Copy */}
-                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
-                  <h3 className="text-lg font-black uppercase text-[#1749C6]">ABOUT SECTION CONTENT</h3>
-                  <div className="space-y-3 text-xs font-semibold">
-                    <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Section Headline</label>
-                      <input
-                        type="text"
-                        value={siteContent.aboutHeadline}
-                        onChange={(e) => setSiteContent({ ...siteContent, aboutHeadline: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Editorial Story Paragraph</label>
-                      <textarea
-                        rows={4}
-                        value={siteContent.aboutStory}
-                        onChange={(e) => setSiteContent({ ...siteContent, aboutStory: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
+                {/* 1. HERO SECTION EDITOR */}
+                {sectionEditorTab === 'hero' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#F20D63]">HERO SECTION COPY & TAGS</h3>
+                          <p className="text-xs text-neutral-400">Headlines, taglines, CTA button labels, and floating badge pills.</p>
+                        </div>
+                        <Sparkles className="w-5 h-5 text-[#F20D63]" />
+                      </div>
 
-                {/* Digital Marketing Copy */}
-                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
-                  <h3 className="text-lg font-black uppercase text-[#FFB800]">DIGITAL MARKETING INCLUDED SECTION</h3>
-                  <div className="space-y-3 text-xs font-semibold">
-                    <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Headline</label>
-                      <input
-                        type="text"
-                        value={siteContent.dmHeadline || 'BECAUSE GREAT DESIGN DESERVES AN AUDIENCE.'}
-                        onChange={(e) => setSiteContent({ ...siteContent, dmHeadline: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Feature Description</label>
-                      <textarea
-                        rows={3}
-                        value={siteContent.dmDescription || 'Every program at SW Institute comes with embedded Digital Marketing training.'}
-                        onChange={(e) => setSiteContent({ ...siteContent, dmDescription: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white"
-                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Main Hero Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.heroHeading}
+                            onChange={(e) => setSiteContent({ ...siteContent, heroHeading: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold text-sm"
+                            placeholder="DESIGN YOUR FUTURE. BUILD YOUR BRAND."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Gradient Highlight Phrase</label>
+                          <input
+                            type="text"
+                            value={siteContent.heroHighlightWord || ''}
+                            onChange={(e) => setSiteContent({ ...siteContent, heroHighlightWord: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-[#F20D63] font-bold"
+                            placeholder="YOUR FUTURE."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Subheading / Brand Title</label>
+                          <input
+                            type="text"
+                            value={siteContent.heroSubheading}
+                            onChange={(e) => setSiteContent({ ...siteContent, heroSubheading: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                            placeholder="South West Institute of Design and Innovation"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Tagline Eyebrow</label>
+                          <input
+                            type="text"
+                            value={siteContent.tagline}
+                            onChange={(e) => setSiteContent({ ...siteContent, tagline: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                            placeholder="LEARN. CREATE. GROW. LEAD YOUR WORLD."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Top Announcement Badge</label>
+                          <input
+                            type="text"
+                            value={siteContent.announcement}
+                            onChange={(e) => setSiteContent({ ...siteContent, announcement: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                            placeholder="Admissions Open 2026–2027 • Limited Seats Available"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">CTA Button 1 (Explore)</label>
+                          <input
+                            type="text"
+                            value={siteContent.heroCtaExplore || 'EXPLORE PROGRAMS'}
+                            onChange={(e) => setSiteContent({ ...siteContent, heroCtaExplore: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">CTA Button 2 (Enquire)</label>
+                          <input
+                            type="text"
+                            value={siteContent.heroCtaEnquire || 'ENQUIRE NOW'}
+                            onChange={(e) => setSiteContent({ ...siteContent, heroCtaEnquire: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Floating Badge Tags */}
+                      <div className="pt-4 border-t border-white/10 space-y-3">
+                        <label className="block text-xs font-mono uppercase text-neutral-300 font-bold">
+                          Floating Feature Badges (3 Badges)
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <span className="block text-[11px] text-neutral-400 font-mono mb-1">Badge 1</span>
+                            <input
+                              type="text"
+                              value={siteContent.heroTag1}
+                              onChange={(e) => setSiteContent({ ...siteContent, heroTag1: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs font-bold"
+                            />
+                          </div>
+                          <div>
+                            <span className="block text-[11px] text-neutral-400 font-mono mb-1">Badge 2</span>
+                            <input
+                              type="text"
+                              value={siteContent.heroTag2}
+                              onChange={(e) => setSiteContent({ ...siteContent, heroTag2: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs font-bold"
+                            />
+                          </div>
+                          <div>
+                            <span className="block text-[11px] text-neutral-400 font-mono mb-1">Badge 3</span>
+                            <input
+                              type="text"
+                              value={siteContent.heroTag3}
+                              onChange={(e) => setSiteContent({ ...siteContent, heroTag3: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs font-bold"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Hero Images Showcase */}
+                      <div className="pt-4 border-t border-white/10 space-y-4">
+                        <h4 className="text-sm font-black uppercase text-white">HERO VISUAL SHOWCASE IMAGERY</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          {renderImageUploadField(
+                            'Hero Showcase Image 1 (Interior / Main)',
+                            siteContent.heroImage1,
+                            'heroImage1',
+                            (url) => setSiteContent({ ...siteContent, heroImage1: url })
+                          )}
+                          {renderImageUploadField(
+                            'Hero Showcase Image 2 (Fashion / Secondary)',
+                            siteContent.heroImage2,
+                            'heroImage2',
+                            (url) => setSiteContent({ ...siteContent, heroImage2: url })
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
+                )}
+
+                {/* 2. ABOUT & PILLARS SECTION EDITOR */}
+                {sectionEditorTab === 'about' && (
+                  <div className="space-y-6">
+                    {/* Main About Story */}
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#1749C6]">ABOUT SECTION STORY & METRICS</h3>
+                          <p className="text-xs text-neutral-400">Philosophy, editorial narrative, and key highlight stats.</p>
+                        </div>
+                        <Layers className="w-5 h-5 text-[#1749C6]" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Section Badge / Tag</label>
+                          <input
+                            type="text"
+                            value={siteContent.aboutTitle}
+                            onChange={(e) => setSiteContent({ ...siteContent, aboutTitle: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                            placeholder="WHO WE ARE"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Highlight Word / Phrase</label>
+                          <input
+                            type="text"
+                            value={siteContent.aboutHighlightWord || 'WE SHAPE CREATORS.'}
+                            onChange={(e) => setSiteContent({ ...siteContent, aboutHighlightWord: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-[#F20D63] font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Main Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.aboutHeadline}
+                            onChange={(e) => setSiteContent({ ...siteContent, aboutHeadline: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold text-sm"
+                            placeholder="WE DON'T JUST TEACH DESIGN."
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Editorial Story Narrative</label>
+                          <textarea
+                            rows={4}
+                            value={siteContent.aboutStory}
+                            onChange={(e) => setSiteContent({ ...siteContent, aboutStory: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white leading-relaxed text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Stat 1 (Value & Label)</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={siteContent.stat1Val}
+                              onChange={(e) => setSiteContent({ ...siteContent, stat1Val: e.target.value })}
+                              placeholder="100%"
+                              className="w-24 px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono font-bold"
+                            />
+                            <input
+                              type="text"
+                              value={siteContent.stat1Label}
+                              onChange={(e) => setSiteContent({ ...siteContent, stat1Label: e.target.value })}
+                              placeholder="Practical Exposure"
+                              className="flex-1 px-3 py-2 rounded-xl bg-black border border-white/20 text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Stat 2 (Value & Label)</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={siteContent.stat2Val}
+                              onChange={(e) => setSiteContent({ ...siteContent, stat2Val: e.target.value })}
+                              placeholder="Included"
+                              className="w-24 px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono font-bold"
+                            />
+                            <input
+                              type="text"
+                              value={siteContent.stat2Label}
+                              onChange={(e) => setSiteContent({ ...siteContent, stat2Label: e.target.value })}
+                              placeholder="Digital Marketing"
+                              className="flex-1 px-3 py-2 rounded-xl bg-black border border-white/20 text-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Interactive Pillars Editor */}
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-lg font-black uppercase text-white">INTERACTIVE DESIGN PILLARS ({(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || []).length} CARDS)</h3>
+                          <p className="text-xs text-neutral-400">Cards rendered in the interactive About switcher with dynamic imagery.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                            list.push({
+                              id: `0${list.length + 1}`,
+                              title: 'NEW PILLAR',
+                              subtitle: 'Pillar Subtitle',
+                              badge: 'CATEGORY BADGE',
+                              color: '#F20D63',
+                              description: 'Pillar description goes here...',
+                              image: '/images/hero_fashion_model.jpg',
+                            });
+                            setSiteContent({ ...siteContent, aboutPillars: list });
+                          }}
+                          className="px-4 py-2 rounded-full bg-[#1749C6] text-white text-xs font-bold uppercase flex items-center gap-1.5 cursor-pointer shadow-md"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>ADD PILLAR</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-6">
+                        {(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || []).map((pillar, idx) => (
+                          <div key={pillar.id + idx} className="p-5 rounded-2xl bg-black/60 border border-white/15 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold text-white" style={{ backgroundColor: pillar.color || '#F20D63' }}>
+                                PILLAR {pillar.id || `0${idx + 1}`}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const list = (siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || []).filter((_, i) => i !== idx);
+                                  setSiteContent({ ...siteContent, aboutPillars: list });
+                                }}
+                                className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                              <div>
+                                <label className="block text-neutral-400 uppercase mb-1">Title</label>
+                                <input
+                                  type="text"
+                                  value={pillar.title}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                                    list[idx] = { ...list[idx], title: e.target.value };
+                                    setSiteContent({ ...siteContent, aboutPillars: list });
+                                  }}
+                                  className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-bold"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-neutral-400 uppercase mb-1">Subtitle</label>
+                                <input
+                                  type="text"
+                                  value={pillar.subtitle}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                                    list[idx] = { ...list[idx], subtitle: e.target.value };
+                                    setSiteContent({ ...siteContent, aboutPillars: list });
+                                  }}
+                                  className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-neutral-400 uppercase mb-1">Badge</label>
+                                <input
+                                  type="text"
+                                  value={pillar.badge}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                                    list[idx] = { ...list[idx], badge: e.target.value };
+                                    setSiteContent({ ...siteContent, aboutPillars: list });
+                                  }}
+                                  className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-neutral-400 uppercase mb-1">Accent Color</label>
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="color"
+                                    value={pillar.color || '#F20D63'}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                                      list[idx] = { ...list[idx], color: e.target.value };
+                                      setSiteContent({ ...siteContent, aboutPillars: list });
+                                    }}
+                                    className="w-10 h-9 rounded-lg bg-black border border-white/20 cursor-pointer p-0.5"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={pillar.color || '#F20D63'}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                                      list[idx] = { ...list[idx], color: e.target.value };
+                                      setSiteContent({ ...siteContent, aboutPillars: list });
+                                    }}
+                                    className="flex-1 px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="sm:col-span-2">
+                                <label className="block text-neutral-400 uppercase mb-1">Description</label>
+                                <textarea
+                                  rows={2}
+                                  value={pillar.description}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                                    list[idx] = { ...list[idx], description: e.target.value };
+                                    setSiteContent({ ...siteContent, aboutPillars: list });
+                                  }}
+                                  className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs"
+                                />
+                              </div>
+
+                              <div className="sm:col-span-2">
+                                {renderImageUploadField(
+                                  `Pillar ${pillar.id} Visual Image`,
+                                  pillar.image,
+                                  `pillar_${idx}`,
+                                  (url) => {
+                                    const list = [...(siteContent.aboutPillars || INITIAL_SITE_CONTENT.aboutPillars || [])];
+                                    list[idx] = { ...list[idx], image: url };
+                                    setSiteContent({ ...siteContent, aboutPillars: list });
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. DIPLOMA PROGRAMS SECTION EDITOR */}
+                {sectionEditorTab === 'programs' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#FFB800]">DIPLOMA PROGRAMS HEADER</h3>
+                          <p className="text-xs text-neutral-400">Headlines and introductory text for the courses showcase.</p>
+                        </div>
+                        <BookOpen className="w-5 h-5 text-[#FFB800]" />
+                      </div>
+
+                      <div className="space-y-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Section Title</label>
+                          <input
+                            type="text"
+                            value={siteContent.programsTitle}
+                            onChange={(e) => setSiteContent({ ...siteContent, programsTitle: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold"
+                            placeholder="EXPLORE OUR DIPLOMA PROGRAMS"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Subheading Description</label>
+                          <textarea
+                            rows={3}
+                            value={siteContent.programsSubheading}
+                            onChange={(e) => setSiteContent({ ...siteContent, programsSubheading: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white"
+                            placeholder="Industry-aligned hands-on programs designed to take you from foundational sketching to full brand launch."
+                          />
+                        </div>
+                      </div>
+
+                      {/* Course Management Shortcut Card */}
+                      <div className="p-6 rounded-2xl bg-[#FFB800]/10 border border-[#FFB800]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <h4 className="text-sm font-black uppercase text-[#FFB800]">
+                            MANAGE DIPLOMA COURSE CARDS ({courses.length} ACTIVE)
+                          </h4>
+                          <p className="text-xs text-neutral-300 mt-0.5">
+                            Add, edit syllabus highlights, durations, eligibility, and cover images in the Courses Manager.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('courses')}
+                          className="px-5 py-2.5 rounded-full bg-[#FFB800] text-black text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-lg shrink-0"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          <span>OPEN COURSES TAB</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. DIGITAL MARKETING SECTION EDITOR */}
+                {sectionEditorTab === 'digital-marketing' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#FFB800]">DIGITAL MARKETING EXCLUSIVE DIFFERENTIATOR</h3>
+                          <p className="text-xs text-neutral-400">Section copy, feature image, floating orbiting skill tags, and feature cards.</p>
+                        </div>
+                        <Share2 className="w-5 h-5 text-[#FFB800]" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Top Eyebrow Tag</label>
+                          <input
+                            type="text"
+                            value={siteContent.dmTitle || 'EXCLUSIVE DIFFERENTIATOR • INCLUDED IN ALL DIPLOMAS'}
+                            onChange={(e) => setSiteContent({ ...siteContent, dmTitle: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Highlight Word / Phrase</label>
+                          <input
+                            type="text"
+                            value={siteContent.dmHighlightWord || 'LEARN TO MARKET IT.'}
+                            onChange={(e) => setSiteContent({ ...siteContent, dmHighlightWord: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-[#F20D63] font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Main Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.dmHeadline || "DON'T JUST DESIGN."}
+                            onChange={(e) => setSiteContent({ ...siteContent, dmHeadline: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold text-sm"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Description Paragraph</label>
+                          <textarea
+                            rows={3}
+                            value={siteContent.dmDescription || ''}
+                            onChange={(e) => setSiteContent({ ...siteContent, dmDescription: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white leading-relaxed text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Card Overlay Eyebrow</label>
+                          <input
+                            type="text"
+                            value={siteContent.dmBadgeTitle || 'DIGITAL PROMOTION & BRANDING STUDIO'}
+                            onChange={(e) => setSiteContent({ ...siteContent, dmBadgeTitle: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Card Overlay Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.dmBadgeHeading || 'Market Your Vision. Build Your Empire.'}
+                            onChange={(e) => setSiteContent({ ...siteContent, dmBadgeHeading: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2 pt-2">
+                          {renderImageUploadField(
+                            'Digital Marketing Workspace Feature Image',
+                            siteContent.dmImage || '/images/digital_marketing_laptop.jpg',
+                            'dmImage',
+                            (url) => setSiteContent({ ...siteContent, dmImage: url })
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Orbiting Skill Tags Editor */}
+                      <div className="pt-6 border-t border-white/10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black uppercase text-white">ORBITING SKILL TAGS ({(siteContent.dmTags || INITIAL_SITE_CONTENT.dmTags || []).length} TAGS)</h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(siteContent.dmTags || INITIAL_SITE_CONTENT.dmTags || [])];
+                              list.push({ label: 'New Strategy', color: '#1749C6', textColor: '#FFFFFF' });
+                              setSiteContent({ ...siteContent, dmTags: list });
+                            }}
+                            className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>ADD TAG</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {(siteContent.dmTags || INITIAL_SITE_CONTENT.dmTags || []).map((tag, tIdx) => (
+                            <div key={tIdx} className="p-3 rounded-xl bg-black/60 border border-white/15 flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={tag.color || '#F20D63'}
+                                onChange={(e) => {
+                                  const list = [...(siteContent.dmTags || INITIAL_SITE_CONTENT.dmTags || [])];
+                                  list[tIdx] = { ...list[tIdx], color: e.target.value };
+                                  setSiteContent({ ...siteContent, dmTags: list });
+                                }}
+                                className="w-8 h-8 rounded-lg bg-black border border-white/20 cursor-pointer p-0.5 shrink-0"
+                              />
+                              <input
+                                type="text"
+                                value={tag.label}
+                                onChange={(e) => {
+                                  const list = [...(siteContent.dmTags || INITIAL_SITE_CONTENT.dmTags || [])];
+                                  list[tIdx] = { ...list[tIdx], label: e.target.value };
+                                  setSiteContent({ ...siteContent, dmTags: list });
+                                }}
+                                className="flex-1 px-2.5 py-1.5 rounded-lg bg-black border border-white/20 text-white text-xs font-bold"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const list = (siteContent.dmTags || INITIAL_SITE_CONTENT.dmTags || []).filter((_, i) => i !== tIdx);
+                                  setSiteContent({ ...siteContent, dmTags: list });
+                                }}
+                                className="p-1 rounded-lg text-neutral-400 hover:text-red-400 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 3 Bottom Feature Cards */}
+                      <div className="pt-6 border-t border-white/10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black uppercase text-white">BOTTOM 3-PILLAR FEATURES</h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(siteContent.dmFeatures || INITIAL_SITE_CONTENT.dmFeatures || [])];
+                              list.push({
+                                num: `0${list.length + 1}`,
+                                title: 'New Skill Focus',
+                                desc: 'Practical syllabus description here...',
+                              });
+                              setSiteContent({ ...siteContent, dmFeatures: list });
+                            }}
+                            className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>ADD FEATURE</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          {(siteContent.dmFeatures || INITIAL_SITE_CONTENT.dmFeatures || []).map((feat, fIdx) => (
+                            <div key={fIdx} className="p-4 rounded-2xl bg-black/60 border border-white/15 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <input
+                                  type="text"
+                                  value={feat.num}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.dmFeatures || INITIAL_SITE_CONTENT.dmFeatures || [])];
+                                    list[fIdx] = { ...list[fIdx], num: e.target.value };
+                                    setSiteContent({ ...siteContent, dmFeatures: list });
+                                  }}
+                                  className="w-14 px-2 py-1 rounded-lg bg-black border border-white/20 text-[#FFB800] font-mono font-bold text-xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = (siteContent.dmFeatures || INITIAL_SITE_CONTENT.dmFeatures || []).filter((_, i) => i !== fIdx);
+                                    setSiteContent({ ...siteContent, dmFeatures: list });
+                                  }}
+                                  className="p-1 rounded-lg text-neutral-400 hover:text-red-400 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <input
+                                type="text"
+                                value={feat.title}
+                                onChange={(e) => {
+                                  const list = [...(siteContent.dmFeatures || INITIAL_SITE_CONTENT.dmFeatures || [])];
+                                  list[fIdx] = { ...list[fIdx], title: e.target.value };
+                                  setSiteContent({ ...siteContent, dmFeatures: list });
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-black border border-white/20 text-white font-bold text-xs"
+                                placeholder="Feature Title"
+                              />
+                              <textarea
+                                rows={2}
+                                value={feat.desc}
+                                onChange={(e) => {
+                                  const list = [...(siteContent.dmFeatures || INITIAL_SITE_CONTENT.dmFeatures || [])];
+                                  list[fIdx] = { ...list[fIdx], desc: e.target.value };
+                                  setSiteContent({ ...siteContent, dmFeatures: list });
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-black border border-white/20 text-neutral-300 text-[11px]"
+                                placeholder="Description"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. WHY SW ADVANTAGE SECTION EDITOR */}
+                {sectionEditorTab === 'why-sw' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#1749C6]">WHY CHOOSE SW INSTITUTE ADVANTAGE</h3>
+                          <p className="text-xs text-neutral-400">Headline copy, subtitle, and repeatable advantage reason cards.</p>
+                        </div>
+                        <Award className="w-5 h-5 text-[#1749C6]" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Section Eyebrow Tag</label>
+                          <input
+                            type="text"
+                            value={siteContent.whySWTitle}
+                            onChange={(e) => setSiteContent({ ...siteContent, whySWTitle: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                            placeholder="THE SW ADVANTAGE"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Highlight Word / Phrase</label>
+                          <input
+                            type="text"
+                            value={siteContent.whySWHighlightWord || 'SW INSTITUTE?'}
+                            onChange={(e) => setSiteContent({ ...siteContent, whySWHighlightWord: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-[#1749C6] font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Main Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.whySWHeadline}
+                            onChange={(e) => setSiteContent({ ...siteContent, whySWHeadline: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold text-sm"
+                            placeholder="WHY CHOOSE"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Section Subtitle Narrative</label>
+                          <textarea
+                            rows={3}
+                            value={siteContent.whySWSubtitle || ''}
+                            onChange={(e) => setSiteContent({ ...siteContent, whySWSubtitle: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white leading-relaxed text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Repeatable Reason Cards */}
+                      <div className="pt-6 border-t border-white/10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black uppercase text-white">
+                            ADVANTAGE REASONS ({(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || []).length} CARDS)
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || [])];
+                              list.push({
+                                num: `0${list.length + 1}`,
+                                title: 'NEW ADVANTAGE',
+                                tagline: 'Tagline summary...',
+                                description: 'Detailed reason narrative...',
+                                color: '#F20D63',
+                              });
+                              setSiteContent({ ...siteContent, whySWReasons: list });
+                            }}
+                            className="px-4 py-2 rounded-full bg-[#1749C6] text-white text-xs font-bold uppercase flex items-center gap-1.5 cursor-pointer shadow-md"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>ADD REASON</span>
+                          </button>
+                        </div>
+
+                        <div className="space-y-4">
+                          {(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || []).map((reason, rIdx) => (
+                            <div key={rIdx} className="p-5 rounded-2xl bg-black/60 border border-white/15 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold text-white" style={{ backgroundColor: reason.color || '#1749C6' }}>
+                                  REASON {reason.num || `0${rIdx + 1}`}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = (siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || []).filter((_, i) => i !== rIdx);
+                                    setSiteContent({ ...siteContent, whySWReasons: list });
+                                  }}
+                                  className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Title</label>
+                                  <input
+                                    type="text"
+                                    value={reason.title}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || [])];
+                                      list[rIdx] = { ...list[rIdx], title: e.target.value };
+                                      setSiteContent({ ...siteContent, whySWReasons: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-bold"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Tagline</label>
+                                  <input
+                                    type="text"
+                                    value={reason.tagline}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || [])];
+                                      list[rIdx] = { ...list[rIdx], tagline: e.target.value };
+                                      setSiteContent({ ...siteContent, whySWReasons: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Card Accent Color</label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="color"
+                                      value={reason.color || '#1749C6'}
+                                      onChange={(e) => {
+                                        const list = [...(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || [])];
+                                        list[rIdx] = { ...list[rIdx], color: e.target.value };
+                                        setSiteContent({ ...siteContent, whySWReasons: list });
+                                      }}
+                                      className="w-10 h-9 rounded-lg bg-black border border-white/20 cursor-pointer p-0.5"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={reason.color || '#1749C6'}
+                                      onChange={(e) => {
+                                        const list = [...(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || [])];
+                                        list[rIdx] = { ...list[rIdx], color: e.target.value };
+                                        setSiteContent({ ...siteContent, whySWReasons: list });
+                                      }}
+                                      className="flex-1 px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Reason Number ID</label>
+                                  <input
+                                    type="text"
+                                    value={reason.num}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || [])];
+                                      list[rIdx] = { ...list[rIdx], num: e.target.value };
+                                      setSiteContent({ ...siteContent, whySWReasons: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono"
+                                  />
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                  <label className="block text-neutral-400 uppercase mb-1">Description</label>
+                                  <textarea
+                                    rows={2}
+                                    value={reason.description}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.whySWReasons || INITIAL_SITE_CONTENT.whySWReasons || [])];
+                                      list[rIdx] = { ...list[rIdx], description: e.target.value };
+                                      setSiteContent({ ...siteContent, whySWReasons: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. STUDENT SHOWCASE GALLERY SECTION */}
+                {sectionEditorTab === 'gallery' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#F20D63]">MADE AT SW • STUDENT SHOWCASE</h3>
+                          <p className="text-xs text-neutral-400">Curate live student projects, sketches, 3D spatial renders, and photoshoots.</p>
+                        </div>
+                        <ImageIcon className="w-5 h-5 text-[#F20D63]" />
+                      </div>
+
+                      <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <h4 className="text-sm font-black uppercase text-white">
+                            GALLERY PORTFOLIO ITEMS ({gallery.length} ITEMS CURRENTLY ACTIVE)
+                          </h4>
+                          <p className="text-xs text-neutral-400 mt-1">
+                            Filter by Fashion, Interior, Sketches, Workshops, or Events. Upload high-res images directly to ImgBB CDN.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('gallery')}
+                          className="px-5 py-2.5 rounded-full bg-[#F20D63] text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-lg shrink-0"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          <span>OPEN GALLERY MANAGER</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 7. EXPERIENCE TIMELINE SECTION EDITOR */}
+                {sectionEditorTab === 'experience' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#F20D63]">THE 6-STAGE SW EXPERIENCE JOURNEY</h3>
+                          <p className="text-xs text-neutral-400">Step-by-step student learning transformation timeline.</p>
+                        </div>
+                        <Clock className="w-5 h-5 text-[#F20D63]" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Section Eyebrow Tag</label>
+                          <input
+                            type="text"
+                            value={siteContent.experienceTitle || 'THE STUDENT JOURNEY'}
+                            onChange={(e) => setSiteContent({ ...siteContent, experienceTitle: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Highlight Word / Phrase</label>
+                          <input
+                            type="text"
+                            value={siteContent.experienceHighlightWord || 'SW EXPERIENCE'}
+                            onChange={(e) => setSiteContent({ ...siteContent, experienceHighlightWord: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-[#F20D63] font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Main Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.experienceHeadline || 'THE'}
+                            onChange={(e) => setSiteContent({ ...siteContent, experienceHeadline: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold text-sm"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Subtitle Description</label>
+                          <textarea
+                            rows={2}
+                            value={siteContent.experienceSubtitle || ''}
+                            onChange={(e) => setSiteContent({ ...siteContent, experienceSubtitle: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white leading-relaxed text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 6 Stages Repeatable List */}
+                      <div className="pt-6 border-t border-white/10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black uppercase text-white">
+                            EXPERIENCE STAGES ({(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || []).length} STAGES)
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                              list.push({
+                                stage: `0${list.length + 1}. NEW STAGE`,
+                                title: 'STAGE TITLE',
+                                subtitle: 'Stage Subtitle',
+                                description: 'Description of hands-on activities...',
+                                image: '/images/hero_interior_render.jpg',
+                                color: '#F20D63',
+                              });
+                              setSiteContent({ ...siteContent, experienceStages: list });
+                            }}
+                            className="px-4 py-2 rounded-full bg-[#F20D63] text-white text-xs font-bold uppercase flex items-center gap-1.5 cursor-pointer shadow-md"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>ADD STAGE</span>
+                          </button>
+                        </div>
+
+                        <div className="space-y-6">
+                          {(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || []).map((stg, sIdx) => (
+                            <div key={sIdx} className="p-5 rounded-2xl bg-black/60 border border-white/15 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold text-white" style={{ backgroundColor: stg.color || '#F20D63' }}>
+                                  {stg.stage || `STAGE 0${sIdx + 1}`}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = (siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || []).filter((_, i) => i !== sIdx);
+                                    setSiteContent({ ...siteContent, experienceStages: list });
+                                  }}
+                                  className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Stage Code & Identifier</label>
+                                  <input
+                                    type="text"
+                                    value={stg.stage}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                                      list[sIdx] = { ...list[sIdx], stage: e.target.value };
+                                      setSiteContent({ ...siteContent, experienceStages: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Title</label>
+                                  <input
+                                    type="text"
+                                    value={stg.title}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                                      list[sIdx] = { ...list[sIdx], title: e.target.value };
+                                      setSiteContent({ ...siteContent, experienceStages: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-bold"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Subtitle</label>
+                                  <input
+                                    type="text"
+                                    value={stg.subtitle}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                                      list[sIdx] = { ...list[sIdx], subtitle: e.target.value };
+                                      setSiteContent({ ...siteContent, experienceStages: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-neutral-400 uppercase mb-1">Color Theme</label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="color"
+                                      value={stg.color || '#F20D63'}
+                                      onChange={(e) => {
+                                        const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                                        list[sIdx] = { ...list[sIdx], color: e.target.value };
+                                        setSiteContent({ ...siteContent, experienceStages: list });
+                                      }}
+                                      className="w-10 h-9 rounded-lg bg-black border border-white/20 cursor-pointer p-0.5"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={stg.color || '#F20D63'}
+                                      onChange={(e) => {
+                                        const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                                        list[sIdx] = { ...list[sIdx], color: e.target.value };
+                                        setSiteContent({ ...siteContent, experienceStages: list });
+                                      }}
+                                      className="flex-1 px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                  <label className="block text-neutral-400 uppercase mb-1">Description</label>
+                                  <textarea
+                                    rows={2}
+                                    value={stg.description}
+                                    onChange={(e) => {
+                                      const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                                      list[sIdx] = { ...list[sIdx], description: e.target.value };
+                                      setSiteContent({ ...siteContent, experienceStages: list });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs"
+                                  />
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                  {renderImageUploadField(
+                                    `Stage Image (${stg.title})`,
+                                    stg.image,
+                                    `stage_${sIdx}`,
+                                    (url) => {
+                                      const list = [...(siteContent.experienceStages || INITIAL_SITE_CONTENT.experienceStages || [])];
+                                      list[sIdx] = { ...list[sIdx], image: url };
+                                      setSiteContent({ ...siteContent, experienceStages: list });
+                                    }
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 8. ELIGIBILITY & WHO JOINS SECTION EDITOR */}
+                {sectionEditorTab === 'eligibility' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#F20D63]">ELIGIBILITY & WHO CAN ENQUIRE</h3>
+                          <p className="text-xs text-neutral-400">Target demographics, no-age-limit badge, and key checklist perks.</p>
+                        </div>
+                        <UserCheck className="w-5 h-5 text-[#F20D63]" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Section Eyebrow Tag</label>
+                          <input
+                            type="text"
+                            value={siteContent.eligibilityTitle || 'STUDIO ELIGIBILITY & ENROLMENT'}
+                            onChange={(e) => setSiteContent({ ...siteContent, eligibilityTitle: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Highlight Word / Phrase</label>
+                          <input
+                            type="text"
+                            value={siteContent.eligibilityHighlightWord || 'ENQUIRE & JOIN?'}
+                            onChange={(e) => setSiteContent({ ...siteContent, eligibilityHighlightWord: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-[#F20D63] font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Main Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.eligibilityHeadline || 'WHO CAN'}
+                            onChange={(e) => setSiteContent({ ...siteContent, eligibilityHeadline: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold text-sm"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Prominent Age & Passout Badge</label>
+                          <input
+                            type="text"
+                            value={siteContent.eligibilityBadge || 'ANYONE WHO HAS PASSED 10TH OR 12TH — NO MATTER YOUR AGE!'}
+                            onChange={(e) => setSiteContent({ ...siteContent, eligibilityBadge: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-[#FFB800] font-bold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 4 Demographics Cards */}
+                      <div className="pt-6 border-t border-white/10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black uppercase text-white">
+                            TARGET DEMOGRAPHICS ({(siteContent.eligibilityCategories || INITIAL_SITE_CONTENT.eligibilityCategories || []).length} CARDS)
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(siteContent.eligibilityCategories || INITIAL_SITE_CONTENT.eligibilityCategories || [])];
+                              list.push({ title: 'New Category', desc: 'Description of eligibility...' });
+                              setSiteContent({ ...siteContent, eligibilityCategories: list });
+                            }}
+                            className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>ADD CATEGORY</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {(siteContent.eligibilityCategories || INITIAL_SITE_CONTENT.eligibilityCategories || []).map((cat, cIdx) => (
+                            <div key={cIdx} className="p-4 rounded-2xl bg-black/60 border border-white/15 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <input
+                                  type="text"
+                                  value={cat.title}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.eligibilityCategories || INITIAL_SITE_CONTENT.eligibilityCategories || [])];
+                                    list[cIdx] = { ...list[cIdx], title: e.target.value };
+                                    setSiteContent({ ...siteContent, eligibilityCategories: list });
+                                  }}
+                                  className="flex-1 px-3 py-1.5 rounded-xl bg-black border border-white/20 text-white font-bold text-xs"
+                                  placeholder="Category Title"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = (siteContent.eligibilityCategories || INITIAL_SITE_CONTENT.eligibilityCategories || []).filter((_, i) => i !== cIdx);
+                                    setSiteContent({ ...siteContent, eligibilityCategories: list });
+                                  }}
+                                  className="p-1.5 ml-2 rounded-lg text-neutral-400 hover:text-red-400 cursor-pointer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <textarea
+                                rows={2}
+                                value={cat.desc}
+                                onChange={(e) => {
+                                  const list = [...(siteContent.eligibilityCategories || INITIAL_SITE_CONTENT.eligibilityCategories || [])];
+                                  list[cIdx] = { ...list[cIdx], desc: e.target.value };
+                                  setSiteContent({ ...siteContent, eligibilityCategories: list });
+                                }}
+                                className="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-neutral-300 text-xs"
+                                placeholder="Category Description"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom Key Highlights Checklist */}
+                      <div className="pt-6 border-t border-white/10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black uppercase text-white">
+                            BOTTOM CHECKLIST PERKS ({(siteContent.eligibilityHighlights || INITIAL_SITE_CONTENT.eligibilityHighlights || []).length} ITEMS)
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(siteContent.eligibilityHighlights || INITIAL_SITE_CONTENT.eligibilityHighlights || [])];
+                              list.push('New Enrolment Perk');
+                              setSiteContent({ ...siteContent, eligibilityHighlights: list });
+                            }}
+                            className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>ADD PERK</span>
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {(siteContent.eligibilityHighlights || INITIAL_SITE_CONTENT.eligibilityHighlights || []).map((hl, hIdx) => (
+                            <div key={hIdx} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={hl}
+                                onChange={(e) => {
+                                  const list = [...(siteContent.eligibilityHighlights || INITIAL_SITE_CONTENT.eligibilityHighlights || [])];
+                                  list[hIdx] = e.target.value;
+                                  setSiteContent({ ...siteContent, eligibilityHighlights: list });
+                                }}
+                                className="flex-1 px-3 py-2 rounded-xl bg-black border border-white/20 text-white text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const list = (siteContent.eligibilityHighlights || INITIAL_SITE_CONTENT.eligibilityHighlights || []).filter((_, i) => i !== hIdx);
+                                  setSiteContent({ ...siteContent, eligibilityHighlights: list });
+                                }}
+                                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 9. ADMISSIONS CALLOUT SECTION EDITOR */}
+                {sectionEditorTab === 'admissions' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#F20D63]">ADMISSIONS CALLOUT BANNER</h3>
+                          <p className="text-xs text-neutral-400">Pre-footer conversion banner, CTA button, and program inclusions.</p>
+                        </div>
+                        <Flame className="w-5 h-5 text-[#F20D63]" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Badge Eyebrow</label>
+                          <input
+                            type="text"
+                            value={siteContent.admissionsBadge || 'ADMISSIONS OPEN 2026 – 2027'}
+                            onChange={(e) => setSiteContent({ ...siteContent, admissionsBadge: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Highlight Word / Phrase</label>
+                          <input
+                            type="text"
+                            value={siteContent.admissionsHighlightWord || 'YOUR BRAND.'}
+                            onChange={(e) => setSiteContent({ ...siteContent, admissionsHighlightWord: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-[#FFB800] font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Main Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.admissionsHeadline || 'YOUR PASSION. YOUR FUTURE.'}
+                            onChange={(e) => setSiteContent({ ...siteContent, admissionsHeadline: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white font-bold text-sm"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Description Paragraph</label>
+                          <textarea
+                            rows={3}
+                            value={siteContent.admissionsDescription || ''}
+                            onChange={(e) => setSiteContent({ ...siteContent, admissionsDescription: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white leading-relaxed text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">CTA Button Text</label>
+                          <input
+                            type="text"
+                            value={siteContent.admissionsButtonText || 'ENQUIRE ABOUT 2026 BATCHES'}
+                            onChange={(e) => setSiteContent({ ...siteContent, admissionsButtonText: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2 pt-2">
+                          {renderImageUploadField(
+                            'Admissions Overlay Background Image',
+                            siteContent.admissionsImage || '/images/hero_fashion_model.jpg',
+                            'admissionsImage',
+                            (url) => setSiteContent({ ...siteContent, admissionsImage: url })
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Program Inclusions (Right Box) */}
+                      <div className="pt-6 border-t border-white/10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black uppercase text-white">
+                            PROGRAM INCLUSIONS ({(siteContent.admissionsInclusions || INITIAL_SITE_CONTENT.admissionsInclusions || []).length} ITEMS)
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(siteContent.admissionsInclusions || INITIAL_SITE_CONTENT.admissionsInclusions || [])];
+                              list.push({
+                                title: 'New Program Highlight',
+                                subtitle: 'Key syllabus summary...',
+                                color: '#F20D63',
+                              });
+                              setSiteContent({ ...siteContent, admissionsInclusions: list });
+                            }}
+                            className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>ADD INCLUSION</span>
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {(siteContent.admissionsInclusions || INITIAL_SITE_CONTENT.admissionsInclusions || []).map((inc, iIdx) => (
+                            <div key={iIdx} className="p-4 rounded-2xl bg-black/60 border border-white/15 flex flex-col sm:flex-row sm:items-center gap-3">
+                              <input
+                                type="color"
+                                value={inc.color || '#F20D63'}
+                                onChange={(e) => {
+                                  const list = [...(siteContent.admissionsInclusions || INITIAL_SITE_CONTENT.admissionsInclusions || [])];
+                                  list[iIdx] = { ...list[iIdx], color: e.target.value };
+                                  setSiteContent({ ...siteContent, admissionsInclusions: list });
+                                }}
+                                className="w-9 h-9 rounded-lg bg-black border border-white/20 cursor-pointer p-0.5 shrink-0"
+                              />
+                              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <input
+                                  type="text"
+                                  value={inc.title}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.admissionsInclusions || INITIAL_SITE_CONTENT.admissionsInclusions || [])];
+                                    list[iIdx] = { ...list[iIdx], title: e.target.value };
+                                    setSiteContent({ ...siteContent, admissionsInclusions: list });
+                                  }}
+                                  className="px-3 py-1.5 rounded-xl bg-black border border-white/20 text-white font-bold"
+                                  placeholder="Title"
+                                />
+                                <input
+                                  type="text"
+                                  value={inc.subtitle}
+                                  onChange={(e) => {
+                                    const list = [...(siteContent.admissionsInclusions || INITIAL_SITE_CONTENT.admissionsInclusions || [])];
+                                    list[iIdx] = { ...list[iIdx], subtitle: e.target.value };
+                                    setSiteContent({ ...siteContent, admissionsInclusions: list });
+                                  }}
+                                  className="px-3 py-1.5 rounded-xl bg-black border border-white/20 text-neutral-300"
+                                  placeholder="Subtitle"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const list = (siteContent.admissionsInclusions || INITIAL_SITE_CONTENT.admissionsInclusions || []).filter((_, i) => i !== iIdx);
+                                  setSiteContent({ ...siteContent, admissionsInclusions: list });
+                                }}
+                                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 cursor-pointer shrink-0"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 10. CAMPUS & CONTACT SECTION EDITOR */}
+                {sectionEditorTab === 'contact' && (
+                  <div className="space-y-6">
+                    <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                          <h3 className="text-xl font-black uppercase text-[#1749C6]">CAMPUS LOCATION & CONTACT DETAILS</h3>
+                          <p className="text-xs text-neutral-400">Address, phone numbers, email, WhatsApp, and academic year settings.</p>
+                        </div>
+                        <Building2 className="w-5 h-5 text-[#1749C6]" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Section Eyebrow Tag</label>
+                          <input
+                            type="text"
+                            value={siteContent.contactTitle || 'VISIT OUR CAMPUS & GET IN TOUCH'}
+                            onChange={(e) => setSiteContent({ ...siteContent, contactTitle: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Headline</label>
+                          <input
+                            type="text"
+                            value={siteContent.contactHeadline || 'CONNECT WITH SW INSTITUTE'}
+                            onChange={(e) => setSiteContent({ ...siteContent, contactHeadline: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-neutral-300 uppercase mb-1">Campus Physical Address</label>
+                          <textarea
+                            rows={2}
+                            value={siteContent.contactAddress}
+                            onChange={(e) => setSiteContent({ ...siteContent, contactAddress: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white leading-relaxed"
+                            placeholder="Vaishali Nagar, Bhilai, Chhattisgarh 490023"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Direct Phone Number</label>
+                          <input
+                            type="text"
+                            value={siteContent.contactPhone}
+                            onChange={(e) => setSiteContent({ ...siteContent, contactPhone: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">WhatsApp Support Number</label>
+                          <input
+                            type="text"
+                            value={siteContent.contactWhatsapp}
+                            onChange={(e) => setSiteContent({ ...siteContent, contactWhatsapp: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Official Email Address</label>
+                          <input
+                            type="email"
+                            value={siteContent.contactEmail}
+                            onChange={(e) => setSiteContent({ ...siteContent, contactEmail: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-neutral-300 uppercase mb-1">Academic Year</label>
+                          <input
+                            type="text"
+                            value={siteContent.academicYear}
+                            onChange={(e) => setSiteContent({ ...siteContent, academicYear: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/20 text-white font-bold"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2 pt-2">
+                          <div className="flex items-center justify-between p-4 rounded-2xl bg-black/60 border border-white/10">
+                            <div>
+                              <span className="block font-bold text-white text-sm">Admissions Open Status</span>
+                              <span className="text-neutral-400 text-xs">Controls the active status badge shown on forms and banners.</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSiteContent({ ...siteContent, admissionsOpen: !siteContent.admissionsOpen })}
+                              className={`px-5 py-2 rounded-full font-mono text-xs font-bold uppercase transition-colors cursor-pointer ${
+                                siteContent.admissionsOpen
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                              }`}
+                            >
+                              {siteContent.admissionsOpen ? '✓ OPEN' : '✕ CLOSED'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bottom Global Save Bar for Section Editor */}
+                <div className="p-6 rounded-3xl bg-gradient-to-r from-white/10 via-white/5 to-white/10 border border-white/15 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h4 className="text-sm font-black uppercase text-white">READY TO PUBLISH YOUR CHANGES?</h4>
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      Saves immediately to local storage and syncs directly to Cloud Firestore.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSaveAll}
+                    className="w-full sm:w-auto px-8 py-3 rounded-full bg-[#F20D63] hover:bg-white hover:text-black text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-pink-500/30 transition-all cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>SAVE ALL SECTION EDITS</span>
+                  </button>
                 </div>
               </div>
             )}

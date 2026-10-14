@@ -5,15 +5,14 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, Layers, Users, Briefcase, Rocket, Award } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 
-export const WhySWSection: React.FC<{ content?: SiteContent }> = () => {
-  const reasons = [
+export const WhySWSection: React.FC<{ content?: SiteContent }> = ({ content }) => {
+  const defaultReasons = [
     {
       num: '01',
       title: 'PRACTICAL LEARNING',
       tagline: 'Real projects. Live studio skills.',
       description:
         'Ditch abstract theory. You work on live architectural blueprints, fabric draping, client briefs, and real construction materials from week one.',
-      icon: Layers,
       color: '#F20D63',
     },
     {
@@ -22,7 +21,6 @@ export const WhySWSection: React.FC<{ content?: SiteContent }> = () => {
       tagline: 'Learn beyond the classroom.',
       description:
         'Site visits to luxury interior spaces, fashion runway shows, textile mill walkthroughs, and commercial photography studios.',
-      icon: Briefcase,
       color: '#1749C6',
     },
     {
@@ -31,7 +29,6 @@ export const WhySWSection: React.FC<{ content?: SiteContent }> = () => {
       tagline: 'Guidance from active professionals.',
       description:
         'Our faculty members are practicing interior architects, celebrity fashion stylists, and digital marketing agency strategists.',
-      icon: Users,
       color: '#FFB800',
     },
     {
@@ -40,7 +37,6 @@ export const WhySWSection: React.FC<{ content?: SiteContent }> = () => {
       tagline: 'Launch your own studio or brand.',
       description:
         'We don’t just train employees; we train founders. Learn pricing, client contract drafting, personal branding, and studio setup.',
-      icon: Rocket,
       color: '#F20D63',
     },
     {
@@ -49,10 +45,12 @@ export const WhySWSection: React.FC<{ content?: SiteContent }> = () => {
       tagline: 'Internships and professional portfolio.',
       description:
         'Graduate with an Awwwards-worthy physical and digital portfolio. Direct internship placements with top design firms in CG and nationwide.',
-      icon: Award,
       color: '#1749C6',
     },
   ];
+
+  const reasonIcons = [Layers, Briefcase, Users, Rocket, Award];
+  const reasons = (content?.whySWReasons && content.whySWReasons.length > 0) ? content.whySWReasons : defaultReasons;
 
   return (
     <section id="whysw" className="relative py-24 bg-[#F8F7F3] text-[#0B0B0D] overflow-hidden">
@@ -62,21 +60,26 @@ export const WhySWSection: React.FC<{ content?: SiteContent }> = () => {
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-mono text-[#F20D63] tracking-widest uppercase mb-3">
               <Sparkles className="w-4 h-4" />
-              <span>THE SW ADVANTAGE</span>
+              <span>{content?.whySWTitle || 'THE SW ADVANTAGE'}</span>
             </div>
             <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
-              WHY CHOOSE <span className="text-[#1749C6]">SW INSTITUTE?</span>
+              {content?.whySWHeadline || 'WHY CHOOSE'}{' '}
+              {content?.whySWHighlightWord ? (
+                <span className="text-[#1749C6]">{content.whySWHighlightWord}</span>
+              ) : (
+                <span className="text-[#1749C6]">SW INSTITUTE?</span>
+              )}
             </h2>
           </div>
           <p className="text-sm text-neutral-600 max-w-md font-medium">
-            Designed for ambitious creators who demand more than a traditional degree. We combine artistry, technology, and business acumen.
+            {content?.whySWSubtitle || 'Designed for ambitious creators who demand more than a traditional degree. We combine artistry, technology, and business acumen.'}
           </p>
         </div>
 
         {/* Horizontal Scrolling / Dynamic Card Layout */}
         <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-neutral-400">
           {reasons.map((reason, idx) => {
-            const Icon = reason.icon;
+            const Icon = reasonIcons[idx % reasonIcons.length] || Layers;
             return (
               <motion.div
                 key={reason.num}

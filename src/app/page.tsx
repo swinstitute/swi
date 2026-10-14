@@ -85,11 +85,11 @@ export default function Home() {
       case 'gallery':
         return <MadeAtSWGallery galleryItems={gallery} />;
       case 'experience':
-        return <ExperienceTimeline />;
+        return <ExperienceTimeline content={content} />;
       case 'eligibility':
-        return <WhoCanApplySection />;
+        return <WhoCanApplySection content={content} />;
       case 'admissions':
-        return <AdmissionsSection onOpenEnquiry={() => setIsEnquiryOpen(true)} />;
+        return <AdmissionsSection content={content} onOpenEnquiry={() => setIsEnquiryOpen(true)} />;
       case 'contact':
         return <ContactSection content={content} onOpenEnquiry={() => setIsEnquiryOpen(true)} />;
       default:

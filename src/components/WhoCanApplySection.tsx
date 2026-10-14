@@ -4,13 +4,32 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, GraduationCap, Briefcase, RefreshCw, Heart, CheckCircle2 } from 'lucide-react';
 
-export const WhoCanApplySection: React.FC = () => {
-  const categories = [
-    { title: 'School Passouts', desc: '10th or 12th completed students ready for a creative career.', icon: GraduationCap },
-    { title: 'Career Switchers', desc: 'Professionals moving into fashion or interior design.', icon: RefreshCw },
-    { title: 'Working Professionals', desc: 'Upskilling in digital marketing and space visualization.', icon: Briefcase },
-    { title: 'Creative Enthusiasts', desc: 'Homemakers and entrepreneurs launching their studio.', icon: Heart },
+import { SiteContent } from '@/lib/types';
+
+export const WhoCanApplySection: React.FC<{ content?: SiteContent }> = ({ content }) => {
+  const defaultCategories = [
+    { title: 'School Passouts', desc: '10th or 12th completed students ready for a creative career.' },
+    { title: 'Career Switchers', desc: 'Professionals moving into fashion or interior design.' },
+    { title: 'Working Professionals', desc: 'Upskilling in digital marketing and space visualization.' },
+    { title: 'Creative Enthusiasts', desc: 'Homemakers and entrepreneurs launching their studio.' },
   ];
+
+  const catIcons = [GraduationCap, RefreshCw, Briefcase, Heart];
+  const categories = (content?.eligibilityCategories && content.eligibilityCategories.length > 0)
+    ? content.eligibilityCategories
+    : defaultCategories;
+
+  const defaultHighlights = [
+    'No Prior Portfolio Required',
+    'Flexible Morning & Afternoon Batches',
+    'Free Personal Brand Counseling',
+  ];
+
+  const highlights = (content?.eligibilityHighlights && content.eligibilityHighlights.length > 0)
+    ? content.eligibilityHighlights
+    : defaultHighlights;
+
+  const highlightColors = ['#F20D63', '#FFB800', '#1749C6'];
 
   return (
     <section className="relative py-20 bg-[#F8F7F3] text-[#0B0B0D] overflow-hidden">
@@ -22,23 +41,28 @@ export const WhoCanApplySection: React.FC = () => {
           <div className="text-center max-w-3xl mx-auto mb-12">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-[#F20D63] tracking-widest uppercase mb-3 font-bold">
               <Sparkles className="w-4 h-4" />
-              <span>STUDIO ELIGIBILITY & ENROLMENT</span>
+              <span>{content?.eligibilityTitle || 'STUDIO ELIGIBILITY & ENROLMENT'}</span>
             </div>
             <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight leading-none text-[#0B0B0D]">
-              WHO CAN <span className="text-[#F20D63]">ENQUIRE & JOIN?</span>
+              {content?.eligibilityHeadline || 'WHO CAN'}{' '}
+              {content?.eligibilityHighlightWord ? (
+                <span className="text-[#F20D63]">{content.eligibilityHighlightWord}</span>
+              ) : (
+                <span className="text-[#F20D63]">ENQUIRE & JOIN?</span>
+              )}
             </h2>
             <div className="mt-4 inline-block px-6 py-2.5 rounded-full bg-[#0B0B0D] text-white font-black text-xs uppercase tracking-widest shadow-lg">
-              ANYONE WHO HAS PASSED 10TH OR 12TH — NO MATTER YOUR AGE!
+              {content?.eligibilityBadge || 'ANYONE WHO HAS PASSED 10TH OR 12TH — NO MATTER YOUR AGE!'}
             </div>
           </div>
 
           {/* 4 Demographics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {categories.map((cat, idx) => {
-              const Icon = cat.icon;
+              const Icon = catIcons[idx % catIcons.length] || GraduationCap;
               return (
                 <motion.div
-                  key={cat.title}
+                  key={cat.title + idx}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -56,18 +80,12 @@ export const WhoCanApplySection: React.FC = () => {
           </div>
 
           <div className="mt-10 pt-6 border-t border-neutral-200 flex flex-wrap items-center justify-between gap-4 text-xs font-bold text-neutral-700">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#F20D63]" />
-              <span>No Prior Portfolio Required</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#FFB800]" />
-              <span>Flexible Morning & Afternoon Batches</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#1749C6]" />
-              <span>Free Personal Brand Counseling</span>
-            </div>
+            {highlights.map((h, i) => (
+              <div key={h + i} className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" style={{ color: highlightColors[i % highlightColors.length] }} />
+                <span>{h}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

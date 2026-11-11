@@ -63,8 +63,13 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenE
                 {/* Image Showcase Container with 1.04x zoom hover */}
                 <div className="relative h-[360px] sm:h-[440px] w-full overflow-hidden bg-neutral-900">
                   <img
-                    src={course.image}
+                    src={course.image || '/images/hero_fashion_model.jpg'}
                     alt={course.title}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src =
+                        course.category === 'Interior' ? '/images/hero_interior_render.jpg' : '/images/hero_fashion_model.jpg';
+                    }}
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 group-hover:brightness-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D] via-black/20 to-transparent p-6 sm:p-8 flex flex-col justify-between">
@@ -153,8 +158,13 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenE
               {/* Header Cover */}
               <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-neutral-900">
                 <img
-                  src={selectedCourse.image}
+                  src={selectedCourse.image || '/images/hero_fashion_model.jpg'}
                   alt={selectedCourse.title}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      selectedCourse.category === 'Interior' ? '/images/hero_interior_render.jpg' : '/images/hero_fashion_model.jpg';
+                  }}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D] via-[#0B0B0D]/50 to-transparent p-6 sm:p-8 flex flex-col justify-between">

@@ -29,7 +29,8 @@ export const uploadToImgBB = async (
     } else if (fileOrBase64 instanceof File) {
       serverFormData.append('image', fileOrBase64);
     } else {
-      serverFormData.append('image', fileOrBase64, 'upload.jpg');
+      const ext = fileOrBase64.type?.split('/')[1]?.replace('+xml', '') || 'jpg';
+      serverFormData.append('image', fileOrBase64, `sw-media.${ext}`);
     }
 
     const res = await fetch('/api/upload', {
@@ -61,14 +62,19 @@ export const uploadToImgBB = async (
 };
 
 /**
- * Syncs any image (local URL, relative path, or Base64 data URL) to ImgBB CDN.
- * If the image is already hosted on ImgBB CDN (e.g. ibb.co), returns original URL.
+ * Syncs uploaded/inline images (Base64 data URLs) to ImgBB CDN.
+ * Keeps built-in static /images/ assets and existing ImgBB CDN links intact so they never suffer external link rot.
  */
 export const syncImageToImgBB = async (
   imageUrl: string
 ): Promise<{ url: string; uploaded: boolean; error?: string }> => {
   if (!imageUrl || imageUrl.trim() === '') {
     return { url: '', uploaded: false };
+  }
+
+  // Keep built-in local static assets served directly by Vercel CDN
+  if (imageUrl.startsWith('/')) {
+    return { url: imageUrl, uploaded: false };
   }
 
   // Already hosted on ImgBB CDN
@@ -86,8 +92,8 @@ export const syncImageToImgBB = async (
       return { url: imageUrl, uploaded: false, error: res.error };
     }
 
-    // If it's a relative URL or accessible image URL, fetch as blob in browser
-    if (typeof window !== 'undefined') {
+    // If it's a blob URL or external accessible image URL, fetch as blob in browser
+    if (typeof window !== 'undefined' && imageUrl.startsWith('blob:')) {
       const response = await fetch(imageUrl);
       if (!response.ok) {
         return { url: imageUrl, uploaded: false, error: `Failed to fetch image: ${response.statusText}` };

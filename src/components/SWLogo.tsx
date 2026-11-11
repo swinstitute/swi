@@ -20,11 +20,9 @@ export const SWLogo: React.FC<SWLogoProps> = ({
   customLogoUrl,
   showSubtitle = true,
 }) => {
-  // Determine mark image source
-  const getLogoSrc = (): string => {
-    if (customLogoUrl && customLogoUrl.trim() !== '') {
-      return customLogoUrl;
-    }
+  const [failedUrl, setFailedUrl] = React.useState<string | null>(null);
+
+  const getFallbackLogoSrc = (): string => {
     switch (variant) {
       case 'light':
         return '/images/sw-logo-mark-light.png';
@@ -34,6 +32,14 @@ export const SWLogo: React.FC<SWLogoProps> = ({
       default:
         return '/images/sw-logo-mark-dark.png';
     }
+  };
+
+  // Determine mark image source
+  const getLogoSrc = (): string => {
+    if (customLogoUrl && customLogoUrl.trim() !== '' && customLogoUrl.trim() !== failedUrl) {
+      return customLogoUrl;
+    }
+    return getFallbackLogoSrc();
   };
 
   // Mark height in pixels based on size & layout
@@ -125,6 +131,11 @@ export const SWLogo: React.FC<SWLogoProps> = ({
   const theme = getThemeStyles();
   const typo = getTypographyStyles();
   const logoSrc = getLogoSrc();
+  const handleLogoError = () => {
+    if (customLogoUrl && logoSrc !== getFallbackLogoSrc()) {
+      setFailedUrl(customLogoUrl.trim());
+    }
+  };
 
   // 1. Mark-only Layout (Icon only)
   if (layout === 'mark-only') {
@@ -137,6 +148,7 @@ export const SWLogo: React.FC<SWLogoProps> = ({
           height={height}
           unoptimized
           priority
+          onError={handleLogoError}
           style={{ height: `${height}px`, width: 'auto' }}
           className="object-contain transition-transform duration-300 hover:scale-105"
         />
@@ -156,6 +168,7 @@ export const SWLogo: React.FC<SWLogoProps> = ({
             height={height}
             unoptimized
             priority
+            onError={handleLogoError}
             style={{ height: `${height}px`, width: 'auto' }}
             className="object-contain drop-shadow-sm"
           />
@@ -194,6 +207,7 @@ export const SWLogo: React.FC<SWLogoProps> = ({
           height={height}
           unoptimized
           priority
+          onError={handleLogoError}
           style={{ height: `${height}px`, width: 'auto' }}
           className="object-contain"
         />

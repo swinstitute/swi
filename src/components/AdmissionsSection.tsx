@@ -47,6 +47,10 @@ export const AdmissionsSection: React.FC<AdmissionsSectionProps> = ({ content, o
             <img
               src={content?.admissionsImage || '/images/hero_fashion_model.jpg'}
               alt="Admissions Showcase SW"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/hero_fashion_model.jpg';
+              }}
               className="w-full h-full object-cover"
             />
           </div>

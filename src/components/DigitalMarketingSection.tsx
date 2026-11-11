@@ -139,6 +139,10 @@ export const DigitalMarketingSection: React.FC<{ content?: SiteContent }> = ({ c
             <img
               src={content?.dmImage || '/images/digital_marketing_laptop.jpg'}
               alt="Digital Marketing Workspace SW Institute"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/digital_marketing_laptop.jpg';
+              }}
               className="w-full h-[340px] sm:h-[480px] object-cover group-hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D]/90 via-transparent to-transparent p-6 sm:p-10 flex flex-col justify-end text-left">

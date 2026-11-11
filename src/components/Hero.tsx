@@ -219,6 +219,10 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
             <img
               src={content.heroImage1 || '/images/hero_interior_render.jpg'}
               alt="Interior Architectural Design Studio SW"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/hero_interior_render.jpg';
+              }}
               className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D]/85 via-transparent to-transparent p-5 flex flex-col justify-end text-white">
@@ -242,6 +246,10 @@ export const Hero: React.FC<HeroProps> = ({ content, onOpenEnquiry }) => {
             <img
               src={content.heroImage2 || '/images/hero_fashion_model.jpg'}
               alt="Fashion Designing Studio SW"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/hero_fashion_model.jpg';
+              }}
               className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D]/90 via-transparent to-transparent p-6 flex flex-col justify-end text-white">

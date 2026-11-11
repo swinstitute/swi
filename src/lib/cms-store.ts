@@ -80,7 +80,7 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   // Global Engine Controls
   cursorStyle: 'normal',
   themeMode: 'light',
-  colorTheme: COLOR_THEME_PRESETS.signature,
+  colorTheme: COLOR_THEME_PRESETS['minimal-luxury'],
   logos: {
     headerLogo: '/images/sw-logo-mark-dark.png',
     mobileHeaderLogo: '/images/sw-logo-mark-dark.png',
@@ -96,9 +96,9 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   heroSubheading: 'South West Institute of Design and Innovation',
   tagline: 'LEARN. CREATE. GROW. LEAD YOUR WORLD.',
   announcement: 'Admissions Open 2026–2027 • Limited Seats Available',
-  heroTag1: '★ DIGITAL MARKETING INCLUDED',
-  heroTag2: 'FASHION & STYLING LAB',
-  heroTag3: '3D SPATIAL VISUALIZATION',
+  heroTag1: 'INTERIOR DESIGNING',
+  heroTag2: '★ DIGITAL MARKETING INCLUDED',
+  heroTag3: 'FASHION & STYLING LAB',
   heroImage1: '/images/hero_interior_render.jpg',
   heroImage2: '/images/hero_fashion_model.jpg',
   heroCtaExplore: 'EXPLORE PROGRAMS',
@@ -156,7 +156,7 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   dmHeadline: 'BECAUSE GREAT DESIGN DESERVES AN AUDIENCE.',
   dmHighlightWord: 'LEARN TO MARKET IT.',
   dmDescription:
-    'Most design institutes stop at teaching creation. At SW Institute, we equip every student with full-stack digital marketing—so you can launch your label, attract premium clients, and build an online empire.',
+    'Every program at SW Institute comes with embedded Digital Marketing training. Learn how to launch your personal brand, run ad campaigns, build an Instagram portfolio, and get high-paying clients.',
   dmImage: '/images/digital_marketing_laptop.jpg',
   dmBadgeTitle: 'DIGITAL PROMOTION & BRANDING STUDIO',
   dmBadgeHeading: 'Market Your Vision. Build Your Empire.',
@@ -320,7 +320,7 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   contactHeadline: 'CAMPUS LOCATION & STUDIO DESK',
   contactPhone: '+91 99939 97767',
   contactWhatsapp: '+91 77729 92592',
-  contactEmail: 'garvproduction.help@gmail.com',
+  contactEmail: 'swinstitute.in@gmail.com',
   contactAddress: 'Beside Panch Mandir, Near Friends Cafe, Gurunanak Market, Vaishali Nagar, Bhilai, Chhattisgarh',
   contactMapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.123456789!2d81.332308!3d21.216391!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28cddddddddddd%3A0x0!2sGurunanak+Market%2C+Vaishali+Nagar%2C+Bhilai%2C+Chhattisgarh!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin',
   contactMapLink: 'https://maps.google.com/?q=Gurunanak+Market+Vaishali+Nagar+Bhilai',
@@ -466,54 +466,147 @@ export const INITIAL_ENQUIRIES: Enquiry[] = [
   },
 ];
 
+const BROKEN_IMGBB_URL_MAP: Record<string, string> = {
+  'https://i.ibb.co/5gJj240Z/upload.jpg': '/images/hero_fashion_model.jpg',
+  'https://i.ibb.co/r21GML1f/upload.jpg': '/images/hero_interior_render.jpg',
+  'https://i.ibb.co/f5j6c6Z/upload.jpg': '/images/digital_marketing_laptop.jpg',
+  'https://i.ibb.co/k2m9Zgdg/upload.png': '/images/sw-logo-mark-dark.png',
+  'https://i.ibb.co/8g71Q9f5/upload.png': '/images/sw-logo-mark-light.png',
+};
+
+export const sanitizeAssetUrl = (url: string | undefined, fallback: string): string => {
+  if (!url || typeof url !== 'string' || url.trim() === '') return fallback;
+  const trimmed = url.trim();
+  if (BROKEN_IMGBB_URL_MAP[trimmed]) {
+    return BROKEN_IMGBB_URL_MAP[trimmed];
+  }
+  return trimmed;
+};
+
+export const sanitizeCourses = (list: Course[] | undefined): Course[] => {
+  if (!Array.isArray(list) || list.length === 0) return INITIAL_COURSES;
+  return list.map((course) => {
+    const fallback =
+      course.category === 'Interior' ? '/images/hero_interior_render.jpg' : '/images/hero_fashion_model.jpg';
+    return {
+      ...course,
+      image: sanitizeAssetUrl(course.image, fallback),
+    };
+  });
+};
+
+export const sanitizeGallery = (list: GalleryItem[] | undefined): GalleryItem[] => {
+  if (!Array.isArray(list) || list.length === 0) return INITIAL_GALLERY;
+  return list.map((item) => {
+    const fallback =
+      item.category === 'Interior'
+        ? '/images/hero_interior_render.jpg'
+        : item.category === 'Workshops'
+        ? '/images/digital_marketing_laptop.jpg'
+        : '/images/hero_fashion_model.jpg';
+    return {
+      ...item,
+      image: sanitizeAssetUrl(item.image, fallback),
+    };
+  });
+};
+
+export const sanitizeSiteContent = (raw: Partial<SiteContent> | null | undefined): SiteContent => {
+  const parsed = raw || {};
+  const mergedAboutPillars =
+    Array.isArray(parsed.aboutPillars) && parsed.aboutPillars.length > 0
+      ? parsed.aboutPillars
+      : INITIAL_SITE_CONTENT.aboutPillars || [];
+  const mergedExperienceStages =
+    Array.isArray(parsed.experienceStages) && parsed.experienceStages.length > 0
+      ? parsed.experienceStages
+      : INITIAL_SITE_CONTENT.experienceStages || [];
+
+  const sanitized: SiteContent = {
+    ...INITIAL_SITE_CONTENT,
+    ...parsed,
+    // Keep server-side secret out of browser/Firestore documents
+    imgbbApiKey: '',
+    heroImage1: sanitizeAssetUrl(parsed.heroImage1, INITIAL_SITE_CONTENT.heroImage1 || '/images/hero_interior_render.jpg'),
+    heroImage2: sanitizeAssetUrl(parsed.heroImage2, INITIAL_SITE_CONTENT.heroImage2 || '/images/hero_fashion_model.jpg'),
+    dmImage: sanitizeAssetUrl(parsed.dmImage, INITIAL_SITE_CONTENT.dmImage || '/images/digital_marketing_laptop.jpg'),
+    admissionsImage: sanitizeAssetUrl(parsed.admissionsImage, INITIAL_SITE_CONTENT.admissionsImage || '/images/hero_fashion_model.jpg'),
+    aboutPillars: mergedAboutPillars.map((pillar, idx) => ({
+      ...pillar,
+      image: sanitizeAssetUrl(
+        pillar.image,
+        INITIAL_SITE_CONTENT.aboutPillars?.[idx]?.image || '/images/hero_fashion_model.jpg'
+      ),
+    })),
+    dmFeatures:
+      Array.isArray(parsed.dmFeatures) && parsed.dmFeatures.length > 0
+        ? parsed.dmFeatures
+        : INITIAL_SITE_CONTENT.dmFeatures,
+    dmTags:
+      Array.isArray(parsed.dmTags) && parsed.dmTags.length > 0
+        ? parsed.dmTags
+        : INITIAL_SITE_CONTENT.dmTags,
+    whySWReasons:
+      Array.isArray(parsed.whySWReasons) && parsed.whySWReasons.length > 0
+        ? parsed.whySWReasons
+        : INITIAL_SITE_CONTENT.whySWReasons,
+    experienceStages: mergedExperienceStages.map((stage, idx) => ({
+      ...stage,
+      image: sanitizeAssetUrl(
+        stage.image,
+        INITIAL_SITE_CONTENT.experienceStages?.[idx]?.image || '/images/hero_fashion_model.jpg'
+      ),
+    })),
+    eligibilityCategories:
+      Array.isArray(parsed.eligibilityCategories) && parsed.eligibilityCategories.length > 0
+        ? parsed.eligibilityCategories
+        : INITIAL_SITE_CONTENT.eligibilityCategories,
+    eligibilityHighlights:
+      Array.isArray(parsed.eligibilityHighlights) && parsed.eligibilityHighlights.length > 0
+        ? parsed.eligibilityHighlights
+        : INITIAL_SITE_CONTENT.eligibilityHighlights,
+    admissionsInclusions:
+      Array.isArray(parsed.admissionsInclusions) && parsed.admissionsInclusions.length > 0
+        ? parsed.admissionsInclusions
+        : INITIAL_SITE_CONTENT.admissionsInclusions,
+    firebaseConfig: { ...INITIAL_SITE_CONTENT.firebaseConfig, ...(parsed.firebaseConfig || {}) },
+    logos: {
+      headerLogo: sanitizeAssetUrl(parsed.logos?.headerLogo, '/images/sw-logo-mark-dark.png'),
+      mobileHeaderLogo: sanitizeAssetUrl(parsed.logos?.mobileHeaderLogo, '/images/sw-logo-mark-dark.png'),
+      footerLogo: sanitizeAssetUrl(parsed.logos?.footerLogo, '/images/sw-logo-mark-dark.png'),
+      adminLogo: sanitizeAssetUrl(parsed.logos?.adminLogo, '/images/sw-logo-mark-light.png'),
+      brandSymbol: sanitizeAssetUrl(parsed.logos?.brandSymbol, '/images/sw-logo-mark-dark.png'),
+    },
+    colorTheme: { ...INITIAL_SITE_CONTENT.colorTheme, ...(parsed.colorTheme || {}) },
+    sectionOrder:
+      Array.isArray(parsed.sectionOrder) && parsed.sectionOrder.length > 0
+        ? parsed.sectionOrder
+        : INITIAL_SECTIONS,
+  };
+
+  if (Array.isArray(parsed.courses) && parsed.courses.length > 0) {
+    sanitized.courses = sanitizeCourses(parsed.courses);
+  } else {
+    delete sanitized.courses;
+  }
+
+  if (Array.isArray(parsed.gallery) && parsed.gallery.length > 0) {
+    sanitized.gallery = sanitizeGallery(parsed.gallery);
+  } else {
+    delete sanitized.gallery;
+  }
+
+  return sanitized;
+};
+
 // LocalStorage Helper for CMS persistence with safe fallback merging
 export const getStoredContent = (): SiteContent => {
   if (typeof window === 'undefined') return INITIAL_SITE_CONTENT;
   try {
     const data = localStorage.getItem('sw_site_content');
     if (!data) return INITIAL_SITE_CONTENT;
-    const parsed = JSON.parse(data);
-    return {
-      ...INITIAL_SITE_CONTENT,
-      ...parsed,
-      aboutPillars: Array.isArray(parsed.aboutPillars) && parsed.aboutPillars.length > 0
-        ? parsed.aboutPillars
-        : INITIAL_SITE_CONTENT.aboutPillars,
-      dmFeatures: Array.isArray(parsed.dmFeatures) && parsed.dmFeatures.length > 0
-        ? parsed.dmFeatures
-        : INITIAL_SITE_CONTENT.dmFeatures,
-      dmTags: Array.isArray(parsed.dmTags) && parsed.dmTags.length > 0
-        ? parsed.dmTags
-        : INITIAL_SITE_CONTENT.dmTags,
-      whySWReasons: Array.isArray(parsed.whySWReasons) && parsed.whySWReasons.length > 0
-        ? parsed.whySWReasons
-        : INITIAL_SITE_CONTENT.whySWReasons,
-      experienceStages: Array.isArray(parsed.experienceStages) && parsed.experienceStages.length > 0
-        ? parsed.experienceStages
-        : INITIAL_SITE_CONTENT.experienceStages,
-      eligibilityCategories: Array.isArray(parsed.eligibilityCategories) && parsed.eligibilityCategories.length > 0
-        ? parsed.eligibilityCategories
-        : INITIAL_SITE_CONTENT.eligibilityCategories,
-      eligibilityHighlights: Array.isArray(parsed.eligibilityHighlights) && parsed.eligibilityHighlights.length > 0
-        ? parsed.eligibilityHighlights
-        : INITIAL_SITE_CONTENT.eligibilityHighlights,
-      admissionsInclusions: Array.isArray(parsed.admissionsInclusions) && parsed.admissionsInclusions.length > 0
-        ? parsed.admissionsInclusions
-        : INITIAL_SITE_CONTENT.admissionsInclusions,
-      imgbbApiKey: parsed.imgbbApiKey || INITIAL_SITE_CONTENT.imgbbApiKey,
-      firebaseConfig: { ...INITIAL_SITE_CONTENT.firebaseConfig, ...(parsed.firebaseConfig || {}) },
-      logos: {
-        headerLogo: parsed.logos?.headerLogo || INITIAL_SITE_CONTENT.logos?.headerLogo,
-        mobileHeaderLogo: parsed.logos?.mobileHeaderLogo || INITIAL_SITE_CONTENT.logos?.mobileHeaderLogo,
-        footerLogo: parsed.logos?.footerLogo || INITIAL_SITE_CONTENT.logos?.footerLogo,
-        adminLogo: parsed.logos?.adminLogo || INITIAL_SITE_CONTENT.logos?.adminLogo,
-        brandSymbol: parsed.logos?.brandSymbol || INITIAL_SITE_CONTENT.logos?.brandSymbol,
-      },
-      colorTheme: { ...INITIAL_SITE_CONTENT.colorTheme, ...(parsed.colorTheme || {}) },
-      sectionOrder: Array.isArray(parsed.sectionOrder) && parsed.sectionOrder.length > 0
-        ? parsed.sectionOrder
-        : INITIAL_SECTIONS,
-    };
+    const parsed = JSON.parse(data) as Partial<SiteContent>;
+    return sanitizeSiteContent(parsed);
   } catch {
     return INITIAL_SITE_CONTENT;
   }
@@ -523,11 +616,11 @@ export const applySiteTheme = (content: SiteContent) => {
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
-  const theme = content.colorTheme || COLOR_THEME_PRESETS.signature;
+  const theme = content.colorTheme || COLOR_THEME_PRESETS['minimal-luxury'];
 
-  root.style.setProperty('--color-primary', theme.primaryAccent || '#F20D63');
-  root.style.setProperty('--color-secondary', theme.secondaryAccent || '#1749C6');
-  root.style.setProperty('--color-tertiary', theme.tertiaryAccent || '#FFB800');
+  root.style.setProperty('--color-primary', theme.primaryAccent || '#C85A32');
+  root.style.setProperty('--color-secondary', theme.secondaryAccent || '#4A5568');
+  root.style.setProperty('--color-tertiary', theme.tertiaryAccent || '#E2D8CE');
 
   let effectiveMode = content.themeMode || 'light';
   if (effectiveMode === 'auto' && typeof window !== 'undefined') {
@@ -557,13 +650,16 @@ export const applySiteTheme = (content: SiteContent) => {
   }
 };
 
-export const saveStoredContent = (content: SiteContent) => {
+export const saveStoredContent = (content: SiteContent, syncToCloud = true) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('sw_site_content', JSON.stringify(content));
-    applySiteTheme(content);
+    const cleanContent = sanitizeSiteContent(content);
+    localStorage.setItem('sw_site_content', JSON.stringify(cleanContent));
+    applySiteTheme(cleanContent);
     window.dispatchEvent(new Event('sw_cms_updated'));
-    // Fire-and-forget Firebase sync
-    saveContentToFirebase(content, content.firebaseConfig);
+    if (syncToCloud) {
+      // Fire-and-forget Firebase sync
+      saveContentToFirebase(cleanContent, cleanContent.firebaseConfig);
+    }
   }
 };
 
@@ -571,7 +667,7 @@ export const getStoredCourses = (): Course[] => {
   if (typeof window === 'undefined') return INITIAL_COURSES;
   try {
     const data = localStorage.getItem('sw_courses');
-    return data ? JSON.parse(data) : INITIAL_COURSES;
+    return data ? sanitizeCourses(JSON.parse(data)) : INITIAL_COURSES;
   } catch {
     return INITIAL_COURSES;
   }
@@ -579,7 +675,8 @@ export const getStoredCourses = (): Course[] => {
 
 export const saveStoredCourses = (courses: Course[]) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('sw_courses', JSON.stringify(courses));
+    const cleanCourses = sanitizeCourses(courses);
+    localStorage.setItem('sw_courses', JSON.stringify(cleanCourses));
     window.dispatchEvent(new Event('sw_cms_updated'));
   }
 };
@@ -588,7 +685,7 @@ export const getStoredGallery = (): GalleryItem[] => {
   if (typeof window === 'undefined') return INITIAL_GALLERY;
   try {
     const data = localStorage.getItem('sw_gallery');
-    return data ? JSON.parse(data) : INITIAL_GALLERY;
+    return data ? sanitizeGallery(JSON.parse(data)) : INITIAL_GALLERY;
   } catch {
     return INITIAL_GALLERY;
   }
@@ -596,7 +693,8 @@ export const getStoredGallery = (): GalleryItem[] => {
 
 export const saveStoredGallery = (gallery: GalleryItem[]) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('sw_gallery', JSON.stringify(gallery));
+    const cleanGallery = sanitizeGallery(gallery);
+    localStorage.setItem('sw_gallery', JSON.stringify(cleanGallery));
     window.dispatchEvent(new Event('sw_cms_updated'));
   }
 };

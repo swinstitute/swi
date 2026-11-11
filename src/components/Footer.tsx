@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { SWLogo } from './SWLogo';
 import { ArrowUpRight } from 'lucide-react';
-import { getStoredContent } from '@/lib/cms-store';
+import { INITIAL_SITE_CONTENT, getStoredContent } from '@/lib/cms-store';
 
 export const Footer: React.FC = () => {
-  const [content, setContent] = useState(getStoredContent());
+  const [content, setContent] = useState(INITIAL_SITE_CONTENT);
   const clickCountRef = React.useRef(0);
 
   useEffect(() => {
     const handleUpdate = () => setContent(getStoredContent());
+    handleUpdate();
     window.addEventListener('sw_cms_updated', handleUpdate);
     return () => window.removeEventListener('sw_cms_updated', handleUpdate);
   }, []);

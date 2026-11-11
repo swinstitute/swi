@@ -97,7 +97,26 @@ export const onAdminAuthStateChanged = (callback: (user: User | null) => void): 
 };
 
 /**
- * Save Site Content to Firestore Document `site/content`
+ * Recursively omit undefined properties so Firestore setDoc never rejects optional fields
+ */
+function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripUndefined(item)) as unknown as T;
+  }
+  if (value !== null && typeof value === 'object') {
+    const cleaned: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v !== undefined) {
+        cleaned[k] = stripUndefined(v);
+      }
+    }
+    return cleaned as T;
+  }
+  return value;
+}
+
+/**
+ * Save Site Content to Firestore Document `sw_site/content`
  */
 export const saveContentToFirebase = async (content: SiteContent, config?: FirebaseSettings): Promise<boolean> => {
   const { db } = initFirebase(config);
@@ -105,10 +124,62 @@ export const saveContentToFirebase = async (content: SiteContent, config?: Fireb
 
   try {
     const docRef = doc(db, 'sw_site', 'content');
-    await setDoc(docRef, content, { merge: true });
+    const safeContent = stripUndefined<SiteContent>({
+      ...content,
+      imgbbApiKey: '',
+    });
+    await setDoc(docRef, safeContent, { merge: true });
     return true;
   } catch (error) {
     console.error('Error saving content to Firebase Firestore:', error);
+    return false;
+  }
+};
+
+/**
+ * Save Courses List to Firestore Document `sw_site/courses`
+ */
+export const saveCoursesToFirebase = async (courses: Course[], config?: FirebaseSettings): Promise<boolean> => {
+  const { db } = initFirebase(config);
+  if (!db) return false;
+
+  try {
+    const docRef = doc(db, 'sw_site', 'courses');
+    await setDoc(
+      docRef,
+      {
+        list: stripUndefined(courses),
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (error) {
+    console.error('Error saving courses to Firebase Firestore:', error);
+    return false;
+  }
+};
+
+/**
+ * Save Gallery List to Firestore Document `sw_site/gallery`
+ */
+export const saveGalleryToFirebase = async (gallery: GalleryItem[], config?: FirebaseSettings): Promise<boolean> => {
+  const { db } = initFirebase(config);
+  if (!db) return false;
+
+  try {
+    const docRef = doc(db, 'sw_site', 'gallery');
+    await setDoc(
+      docRef,
+      {
+        list: stripUndefined(gallery),
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (error) {
+    console.error('Error saving gallery to Firebase Firestore:', error);
     return false;
   }
 };
@@ -293,12 +364,13 @@ export const syncAllDataToFirebase = async (
     const contentRef = doc(db, 'sw_site', 'content');
     await setDoc(
       contentRef,
-      {
+      stripUndefined({
         ...content,
+        imgbbApiKey: '',
         courses,
         gallery,
         lastCloudSync: new Date().toISOString(),
-      },
+      }),
       { merge: true }
     );
 
@@ -307,7 +379,7 @@ export const syncAllDataToFirebase = async (
     await setDoc(
       coursesRef,
       {
-        list: courses,
+        list: stripUndefined(courses),
         updatedAt: new Date().toISOString(),
       },
       { merge: true }
@@ -318,7 +390,7 @@ export const syncAllDataToFirebase = async (
     await setDoc(
       galleryRef,
       {
-        list: gallery,
+        list: stripUndefined(gallery),
         updatedAt: new Date().toISOString(),
       },
       { merge: true }
@@ -330,10 +402,10 @@ export const syncAllDataToFirebase = async (
       const enqDocRef = doc(db, 'enquiries', enq.id);
       await setDoc(
         enqDocRef,
-        {
+        stripUndefined({
           ...enq,
           syncedAt: new Date().toISOString(),
-        },
+        }),
         { merge: true }
       );
       count++;

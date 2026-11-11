@@ -123,8 +123,17 @@ export const MadeAtSWGallery: React.FC<MadeAtSWGalleryProps> = ({ galleryItems }
                 }`}
               >
                 <img
-                  src={item.image}
+                  src={item.image || '/images/hero_fashion_model.jpg'}
                   alt={item.title}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      item.category === 'Interior'
+                        ? '/images/hero_interior_render.jpg'
+                        : item.category === 'Workshops'
+                        ? '/images/digital_marketing_laptop.jpg'
+                        : '/images/hero_fashion_model.jpg';
+                  }}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D]/90 via-black/20 to-transparent p-6 flex flex-col justify-between">
@@ -183,8 +192,17 @@ export const MadeAtSWGallery: React.FC<MadeAtSWGalleryProps> = ({ galleryItems }
 
               <div className="w-full md:w-2/3 h-80 md:h-[520px] overflow-hidden bg-neutral-900">
                 <img
-                  src={lightboxItem.image}
+                  src={lightboxItem.image || '/images/hero_fashion_model.jpg'}
                   alt={lightboxItem.title}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      lightboxItem.category === 'Interior'
+                        ? '/images/hero_interior_render.jpg'
+                        : lightboxItem.category === 'Workshops'
+                        ? '/images/digital_marketing_laptop.jpg'
+                        : '/images/hero_fashion_model.jpg';
+                  }}
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -17,6 +17,9 @@ import { SectionDivider } from '@/components/SectionDivider';
 import { EnquiryFormModal } from '@/components/EnquiryFormModal';
 import { SecretAdminModal } from '@/components/SecretAdminModal';
 import {
+  INITIAL_SITE_CONTENT,
+  INITIAL_COURSES,
+  INITIAL_GALLERY,
   getStoredContent,
   getStoredCourses,
   getStoredGallery,
@@ -24,13 +27,16 @@ import {
   saveStoredContent,
   saveStoredCourses,
   saveStoredGallery,
+  sanitizeSiteContent,
+  sanitizeCourses,
+  sanitizeGallery,
 } from '@/lib/cms-store';
 import { subscribeToFirebaseContent } from '@/lib/firebase';
 
 export default function Home() {
-  const [content, setContent] = useState(getStoredContent());
-  const [courses, setCourses] = useState(getStoredCourses());
-  const [gallery, setGallery] = useState(getStoredGallery());
+  const [content, setContent] = useState(INITIAL_SITE_CONTENT);
+  const [courses, setCourses] = useState(INITIAL_COURSES);
+  const [gallery, setGallery] = useState(INITIAL_GALLERY);
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
   useEffect(() => {
@@ -47,19 +53,22 @@ export default function Home() {
     // Subscribe to Firebase Firestore live updates if Firebase config exists
     const unsubscribeFirebase = subscribeToFirebaseContent((remoteContent) => {
       if (remoteContent) {
-        saveStoredContent(remoteContent);
-        setContent(remoteContent);
-        if (remoteContent.courses && Array.isArray(remoteContent.courses)) {
-          saveStoredCourses(remoteContent.courses);
-          setCourses(remoteContent.courses);
+        const cleanContent = sanitizeSiteContent(remoteContent);
+        saveStoredContent(cleanContent, false);
+        setContent(cleanContent);
+        if (cleanContent.courses && Array.isArray(cleanContent.courses)) {
+          const cleanCourses = sanitizeCourses(cleanContent.courses);
+          saveStoredCourses(cleanCourses);
+          setCourses(cleanCourses);
         }
-        if (remoteContent.gallery && Array.isArray(remoteContent.gallery)) {
-          saveStoredGallery(remoteContent.gallery);
-          setGallery(remoteContent.gallery);
+        if (cleanContent.gallery && Array.isArray(cleanContent.gallery)) {
+          const cleanGallery = sanitizeGallery(cleanContent.gallery);
+          saveStoredGallery(cleanGallery);
+          setGallery(cleanGallery);
         }
-        applySiteTheme(remoteContent);
+        applySiteTheme(cleanContent);
       }
-    }, content.firebaseConfig);
+    }, INITIAL_SITE_CONTENT.firebaseConfig);
 
     window.addEventListener('sw_cms_updated', refreshStore);
 

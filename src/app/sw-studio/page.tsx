@@ -5,7 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SWLogo } from '@/components/SWLogo';
 import { uploadToImgBB, syncImageToImgBB } from '@/lib/imgbb';
 import {
+  loadContentFromFirebase,
   saveContentToFirebase,
+  saveCoursesToFirebase,
+  saveGalleryToFirebase,
   syncAllDataToFirebase,
   subscribeToFirebaseEnquiries,
   updateEnquiryStatusInFirebase,
@@ -89,9 +92,15 @@ import {
   saveStoredGallery,
   getStoredEnquiries,
   saveStoredEnquiries,
+  sanitizeSiteContent,
+  sanitizeCourses,
+  sanitizeGallery,
   COLOR_THEME_PRESETS,
   INITIAL_SECTIONS,
   INITIAL_SITE_CONTENT,
+  INITIAL_COURSES,
+  INITIAL_GALLERY,
+  INITIAL_ENQUIRIES,
   applySiteTheme,
 } from '@/lib/cms-store';
 
@@ -167,7 +176,15 @@ export default function SWStudioAdminPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/20 bg-neutral-900 shrink-0 flex items-center justify-center">
           {value ? (
-            <img src={value} alt={label} className="w-full h-full object-cover" />
+            <img
+              src={value}
+              alt={label}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/sw-logo-mark-dark.png';
+              }}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <ImageIcon className="w-6 h-6 text-neutral-500" />
           )}
@@ -202,17 +219,23 @@ export default function SWStudioAdminPage() {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
 
-  // Content States
-  const [siteContent, setSiteContent] = useState<SiteContent>(getStoredContent());
-  const [courses, setCourses] = useState<Course[]>(getStoredCourses());
-  const [gallery, setGallery] = useState<GalleryItem[]>(getStoredGallery());
-  const [enquiries, setEnquiries] = useState<Enquiry[]>(getStoredEnquiries());
+  // Content States (Initialized with SSR-safe defaults; hydrated in useEffect)
+  const [siteContent, setSiteContent] = useState<SiteContent>(INITIAL_SITE_CONTENT);
+  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
+  const [gallery, setGallery] = useState<GalleryItem[]>(INITIAL_GALLERY);
+  const [enquiries, setEnquiries] = useState<Enquiry[]>(INITIAL_ENQUIRIES);
 
   // Notification & Realtime Enquiry States
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() =>
-    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
-  );
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(soundEnabled);
+  const brandSymbolRef = useRef(siteContent.logos?.brandSymbol || '/images/sw-logo-mark-dark.png');
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+  useEffect(() => {
+    brandSymbolRef.current = siteContent.logos?.brandSymbol || '/images/sw-logo-mark-dark.png';
+  }, [siteContent.logos?.brandSymbol]);
   const [newEnquiryToast, setNewEnquiryToast] = useState<Enquiry | null>(null);
   const [enquirySearch, setEnquirySearch] = useState('');
   const [enquiryStatusFilter, setEnquiryStatusFilter] = useState<'All' | 'New' | 'Contacted' | 'Enrolled' | 'Closed'>('All');
@@ -498,7 +521,7 @@ export default function SWStudioAdminPage() {
       setSiteContent(updatedContent);
       setCourses(updatedCourses);
       setGallery(updatedGallery);
-      saveStoredContent(updatedContent);
+      saveStoredContent(updatedContent, false);
       saveStoredCourses(updatedCourses);
       saveStoredGallery(updatedGallery);
       saveStoredEnquiries(enquiries);
@@ -541,10 +564,29 @@ export default function SWStudioAdminPage() {
   };
 
   useEffect(() => {
-    // 1. Verify server-side admin authentication session
+    let isActive = true;
+    const localContent = getStoredContent();
+
+    // 1. Hydrate localStorage and browser-only Notification state post-mount (prevents hydration mismatch #418)
+    queueMicrotask(() => {
+      if (!isActive) return;
+      setSiteContent(localContent);
+      setCourses(getStoredCourses());
+      setGallery(getStoredGallery());
+      setEnquiries(getStoredEnquiries());
+      applySiteTheme(localContent);
+
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        setNotificationPermission(Notification.permission);
+      }
+    });
+
+    // 2. Verify server-side admin authentication session
     fetch('/api/admin/auth')
-      .then((res) => {
-        if (res.ok) {
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isActive) return;
+        if (data?.authenticated) {
           setIsAuthenticated(true);
         } else {
           localStorage.removeItem('sw_admin_auth');
@@ -553,13 +595,38 @@ export default function SWStudioAdminPage() {
       })
       .catch(() => {});
 
+    // 3. Load and heal latest published content from Firestore once on mount
+    loadContentFromFirebase(localContent.firebaseConfig).then((remoteContent) => {
+      if (!isActive || !remoteContent) return;
+      const cleanContent = sanitizeSiteContent(remoteContent);
+      setSiteContent(cleanContent);
+      saveStoredContent(cleanContent, false);
+      if (cleanContent.courses && Array.isArray(cleanContent.courses)) {
+        const cleanCourses = sanitizeCourses(cleanContent.courses);
+        setCourses(cleanCourses);
+        saveStoredCourses(cleanCourses);
+      }
+      if (cleanContent.gallery && Array.isArray(cleanContent.gallery)) {
+        const cleanGallery = sanitizeGallery(cleanContent.gallery);
+        setGallery(cleanGallery);
+        saveStoredGallery(cleanGallery);
+      }
+      applySiteTheme(cleanContent);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
     // Helper to trigger chime, device notification, toast, and immediate list update
     const notifyNewEnquiry = (enq: Enquiry) => {
       if (!enq?.id) return;
       if (seenEnquiryIdsRef.current.has(enq.id)) return;
       seenEnquiryIdsRef.current.add(enq.id);
 
-      if (soundEnabled) {
+      if (soundEnabledRef.current) {
         playNotificationChime();
       }
 
@@ -567,7 +634,7 @@ export default function SWStudioAdminPage() {
         try {
           new Notification(`🔔 New Lead [${enq.id}]: ${enq.name}`, {
             body: `${enq.course} • Age: ${enq.age || 'N/A'} • Phone: ${enq.phone}`,
-            icon: siteContent.logos?.brandSymbol || '/icon.png',
+            icon: brandSymbolRef.current || '/icon.png',
           });
         } catch (e) {
           console.warn('Device notification error:', e);
@@ -634,7 +701,7 @@ export default function SWStudioAdminPage() {
       }
       if (channel) channel.close();
     };
-  }, [siteContent.firebaseConfig, soundEnabled, siteContent.logos?.brandSymbol]);
+  }, [siteContent.firebaseConfig]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -672,11 +739,19 @@ export default function SWStudioAdminPage() {
   };
 
   const handleSaveAll = () => {
-    saveStoredContent(siteContent);
+    const syncedContent: SiteContent = {
+      ...siteContent,
+      courses,
+      gallery,
+    };
+    setSiteContent(syncedContent);
+    saveStoredContent(syncedContent);
     saveStoredCourses(courses);
     saveStoredGallery(gallery);
     saveStoredEnquiries(enquiries);
-    applySiteTheme(siteContent);
+    saveCoursesToFirebase(courses, syncedContent.firebaseConfig);
+    saveGalleryToFirebase(gallery, syncedContent.firebaseConfig);
+    applySiteTheme(syncedContent);
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
@@ -714,15 +789,23 @@ export default function SWStudioAdminPage() {
       featured: true,
     };
     const updated = [...courses, courseToAdd];
+    const updatedContent: SiteContent = { ...siteContent, courses: updated };
     setCourses(updated);
+    setSiteContent(updatedContent);
     saveStoredCourses(updated);
+    saveStoredContent(updatedContent);
+    saveCoursesToFirebase(updated, updatedContent.firebaseConfig);
     setShowAddCourse(false);
   };
 
   const handleDeleteCourse = (id: string) => {
     const updated = courses.filter((c) => c.id !== id);
+    const updatedContent: SiteContent = { ...siteContent, courses: updated };
     setCourses(updated);
+    setSiteContent(updatedContent);
     saveStoredCourses(updated);
+    saveStoredContent(updatedContent);
+    saveCoursesToFirebase(updated, updatedContent.firebaseConfig);
   };
 
   const handleCreateGalleryItem = (e: React.FormEvent) => {
@@ -738,15 +821,23 @@ export default function SWStudioAdminPage() {
       aspectRatio: newGalleryItem.aspectRatio || 'square',
     };
     const updated = [...gallery, itemToAdd];
+    const updatedContent: SiteContent = { ...siteContent, gallery: updated };
     setGallery(updated);
+    setSiteContent(updatedContent);
     saveStoredGallery(updated);
+    saveStoredContent(updatedContent);
+    saveGalleryToFirebase(updated, updatedContent.firebaseConfig);
     setShowAddGallery(false);
   };
 
   const handleDeleteGalleryItem = (id: string) => {
     const updated = gallery.filter((g) => g.id !== id);
+    const updatedContent: SiteContent = { ...siteContent, gallery: updated };
     setGallery(updated);
+    setSiteContent(updatedContent);
     saveStoredGallery(updated);
+    saveStoredContent(updatedContent);
+    saveGalleryToFirebase(updated, updatedContent.firebaseConfig);
   };
 
   // File Upload Handler for Custom Logos with ImgBB API Integration
@@ -2076,6 +2167,13 @@ export default function SWStudioAdminPage() {
                               <img
                                 src={currentVal}
                                 alt={logoItem.label}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src =
+                                    logoItem.key === 'adminLogo'
+                                      ? '/images/sw-logo-mark-light.png'
+                                      : '/images/sw-logo-mark-dark.png';
+                                }}
                                 className="max-h-20 object-contain mx-auto"
                               />
                               <button
@@ -3922,6 +4020,13 @@ export default function SWStudioAdminPage() {
                         <img
                           src={course.image}
                           alt={course.title}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src =
+                              course.category === 'Interior'
+                                ? '/images/hero_interior_render.jpg'
+                                : '/images/hero_fashion_model.jpg';
+                          }}
                           className="w-20 h-20 rounded-xl object-cover"
                         />
                         <div>
@@ -4049,6 +4154,15 @@ export default function SWStudioAdminPage() {
                       <img
                         src={g.image}
                         alt={g.title}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src =
+                            g.category === 'Interior'
+                              ? '/images/hero_interior_render.jpg'
+                              : g.category === 'Workshops'
+                              ? '/images/digital_marketing_laptop.jpg'
+                              : '/images/hero_fashion_model.jpg';
+                        }}
                         className="w-full h-40 object-cover rounded-xl mb-3"
                       />
                       <div>
@@ -4116,7 +4230,9 @@ export default function SWStudioAdminPage() {
                   {siteContent.lastCloudSync && (
                     <div className="text-[11px] font-mono text-neutral-400 flex items-center gap-2 pt-2 border-t border-white/5">
                       <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      <span>Last Successful Full Cloud Sync: {new Date(siteContent.lastCloudSync).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                      <span suppressHydrationWarning>
+                        Last Successful Full Cloud Sync: {new Date(siteContent.lastCloudSync).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </span>
                     </div>
                   )}
                 </div>

@@ -163,8 +163,12 @@ export const ExperienceTimeline: React.FC<{ content?: SiteContent }> = ({ conten
                 className="absolute inset-0"
               >
                 <img
-                  src={currentStep.image}
+                  src={currentStep.image || '/images/hero_fashion_model.jpg'}
                   alt={currentStep.title}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/images/hero_fashion_model.jpg';
+                  }}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D] via-transparent to-transparent p-8 flex flex-col justify-end text-white">

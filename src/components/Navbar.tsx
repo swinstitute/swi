@@ -18,7 +18,7 @@ import {
   Phone,
   ChevronRight,
 } from 'lucide-react';
-import { getStoredContent, saveStoredContent, applySiteTheme } from '@/lib/cms-store';
+import { INITIAL_SITE_CONTENT, getStoredContent, saveStoredContent, applySiteTheme } from '@/lib/cms-store';
 
 interface NavbarProps {
   onOpenEnquiry: () => void;
@@ -28,7 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenEnquiry }) => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [content, setContent] = useState(getStoredContent());
+  const [content, setContent] = useState(INITIAL_SITE_CONTENT);
   const logoClicksRef = React.useRef(0);
 
   useEffect(() => {
@@ -53,6 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenEnquiry }) => {
     };
 
     const handleUpdate = () => setContent(getStoredContent());
+    handleUpdate();
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('sw_cms_updated', handleUpdate);
@@ -78,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenEnquiry }) => {
     const currentMode = content.themeMode || 'light';
     const nextMode: 'light' | 'dark' = currentMode === 'dark' ? 'light' : 'dark';
     const updated = { ...content, themeMode: nextMode };
-    saveStoredContent(updated);
+    saveStoredContent(updated, false);
     applySiteTheme(updated);
   };
 

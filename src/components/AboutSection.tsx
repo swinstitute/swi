@@ -152,8 +152,12 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ content }) => {
                 className="absolute inset-0"
               >
                 <img
-                  src={currentPillar.image}
+                  src={currentPillar.image || '/images/hero_fashion_model.jpg'}
                   alt={currentPillar.title}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/images/hero_fashion_model.jpg';
+                  }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0D]/90 via-transparent to-transparent p-8 flex flex-col justify-end">

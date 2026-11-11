@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SWLogo } from '@/components/SWLogo';
+import { MapLocationEditor } from '@/components/MapLocationEditor';
 import { uploadToImgBB, syncImageToImgBB } from '@/lib/imgbb';
 import {
   loadContentFromFirebase,
@@ -738,13 +739,14 @@ export default function SWStudioAdminPage() {
     localStorage.removeItem('sw_admin_auth');
   };
 
-  const handleSaveAll = () => {
+  const publishContentSnapshot = (contentSnapshot: SiteContent) => {
+    const cleanSnapshot = sanitizeSiteContent(contentSnapshot);
     const syncedContent: SiteContent = {
-      ...siteContent,
+      ...cleanSnapshot,
       courses,
       gallery,
     };
-    setSiteContent(syncedContent);
+    setSiteContent(cleanSnapshot);
     saveStoredContent(syncedContent);
     saveStoredCourses(courses);
     saveStoredGallery(gallery);
@@ -755,6 +757,10 @@ export default function SWStudioAdminPage() {
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
+  };
+
+  const handleSaveAll = () => {
+    publishContentSnapshot(siteContent);
   };
 
   const handleUpdateEnquiryStatus = (id: string, status: Enquiry['status']) => {
@@ -1285,6 +1291,7 @@ export default function SWStudioAdminPage() {
           { id: 'appearance', label: 'Theme', icon: Palette },
           { id: 'logos', label: 'Logos', icon: Upload },
           { id: 'section-reorder', label: 'Reorder', icon: Layers },
+          { id: 'section-content', label: 'Sections', icon: FileText },
           { id: 'courses', label: 'Courses', icon: BookOpen },
           { id: 'gallery', label: 'Gallery', icon: ImageIcon },
           { id: 'settings', label: 'Settings', icon: Settings },
@@ -2351,7 +2358,7 @@ export default function SWStudioAdminPage() {
                     { id: 'experience', label: '7. Experience (6 Stages)', icon: Clock },
                     { id: 'eligibility', label: '8. Eligibility', icon: UserCheck },
                     { id: 'admissions', label: '9. Admissions Callout', icon: Flame },
-                    { id: 'contact', label: '10. Campus & Contact', icon: Building2 },
+                    { id: 'contact', label: '10. Campus, Map & Contact', icon: Building2 },
                   ].map((tab) => {
                     const Icon = tab.icon;
                     const isActive = sectionEditorTab === tab.id;
@@ -3798,8 +3805,8 @@ export default function SWStudioAdminPage() {
                     <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
                       <div className="flex items-center justify-between border-b border-white/10 pb-4">
                         <div>
-                          <h3 className="text-xl font-black uppercase text-[#1749C6]">CAMPUS LOCATION & CONTACT DETAILS</h3>
-                          <p className="text-xs text-neutral-400">Address, phone numbers, email, WhatsApp, and academic year settings.</p>
+                          <h3 className="text-xl font-black uppercase text-[#1749C6]">CAMPUS LOCATION &amp; CONTACT DETAILS</h3>
+                          <p className="text-xs text-neutral-400">Address, Google Map pin &amp; directions, phone numbers, email, WhatsApp, and academic year settings.</p>
                         </div>
                         <Building2 className="w-5 h-5 text-[#1749C6]" />
                       </div>
@@ -3897,6 +3904,13 @@ export default function SWStudioAdminPage() {
                         </div>
                       </div>
                     </div>
+
+                    <MapLocationEditor
+                      siteContent={siteContent}
+                      onChange={setSiteContent}
+                      onPublish={publishContentSnapshot}
+                      variant="section"
+                    />
                   </div>
                 )}
 
@@ -4445,8 +4459,8 @@ export default function SWStudioAdminPage() {
                       <Building2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold uppercase tracking-wider text-white">Campus Location & Contacts</h2>
-                      <p className="text-xs text-neutral-400">Public phone numbers, official WhatsApp helpline, and campus address.</p>
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-white">Campus Location &amp; Contacts</h2>
+                      <p className="text-xs text-neutral-400">Public phone numbers, official WhatsApp helpline, campus address, and Google Map pin.</p>
                     </div>
                   </div>
 
@@ -4483,7 +4497,7 @@ export default function SWStudioAdminPage() {
                     </div>
 
                     <div>
-                      <label className="block text-neutral-300 uppercase mb-1">Bhilai Campus Address</label>
+                      <label className="block text-neutral-300 uppercase mb-1">Campus Physical Address</label>
                       <textarea
                         rows={2}
                         value={siteContent.contactAddress}
@@ -4491,6 +4505,13 @@ export default function SWStudioAdminPage() {
                         className="w-full px-4 py-3 rounded-xl bg-black border border-white/20 text-white text-sm"
                       />
                     </div>
+
+                    <MapLocationEditor
+                      siteContent={siteContent}
+                      onChange={setSiteContent}
+                      onPublish={publishContentSnapshot}
+                      variant="settings"
+                    />
                   </div>
                 </div>
 

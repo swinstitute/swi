@@ -5,7 +5,13 @@ import { motion } from 'framer-motion';
 import { Sparkles, MapPin, Phone, MessageSquare, Mail, Send, CheckCircle2, ArrowUpRight, Copy, Check, Calendar, User } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { SiteContent, Enquiry } from '@/lib/types';
-import { addEnquiry } from '@/lib/cms-store';
+import { addEnquiry, INITIAL_SITE_CONTENT } from '@/lib/cms-store';
+import {
+  sanitizeMapEmbedUrl,
+  sanitizeMapLinkUrl,
+  buildMapsEmbedUrl,
+  buildMapsLinkUrl,
+} from '@/lib/map-utils';
 
 const InstagramIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -72,10 +78,21 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
     });
   };
 
+  const fallbackEmbed =
+    INITIAL_SITE_CONTENT.contactMapEmbedUrl ||
+    buildMapsEmbedUrl(content.contactAddress || 'Gurunanak Market, Vaishali Nagar, Bhilai, Chhattisgarh');
+  const fallbackLink =
+    INITIAL_SITE_CONTENT.contactMapLink ||
+    buildMapsLinkUrl(content.contactAddress || 'Gurunanak Market, Vaishali Nagar, Bhilai, Chhattisgarh');
+  const safeMapEmbedUrl = sanitizeMapEmbedUrl(content.contactMapEmbedUrl, fallbackEmbed);
+  const safeMapLink = sanitizeMapLinkUrl(content.contactMapLink, fallbackLink);
+  const mapLabel = (content.contactMapLabel || 'BHILAI CAMPUS').trim() || 'BHILAI CAMPUS';
+  const whatsappDigits = (content.contactWhatsapp || '+91 77729 92592').replace(/[^\d]/g, '') || '917772992592';
+
   const getWhatsAppUrl = () => {
     const refTag = lastCreated?.id ? `[Ref: #${lastCreated.id}] ` : '';
     const text = `Hello SW Institute! I submitted an admission enquiry ${refTag}\n• Name: ${formData.name}\n• Phone: ${formData.phone}\n• Age: ${formData.age || 'N/A'}\n• Course: ${formData.course}\n• Query: ${formData.message || 'General Information'}`;
-    return `https://wa.me/917772992592?text=${encodeURIComponent(text)}`;
+    return `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(text)}`;
   };
 
   return (
@@ -111,7 +128,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                 </div>
                 <div>
                   <span className="text-xs font-mono text-[#F20D63] uppercase font-bold tracking-widest">
-                    BHILAI CAMPUS
+                    {mapLabel}
                   </span>
                   <h3 className="text-lg font-black uppercase text-[#0B0B0D] mt-1">
                     South West Institute of Design & Innovation
@@ -136,7 +153,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
                 </a>
 
                 <a
-                  href={`https://wa.me/${content.contactWhatsapp.replace(/[^\d]/g, '')}?text=Hello%20SW%20Institute!%20I%20want%20to%20enquire%20about%20courses.`}
+                  href={`https://wa.me/${whatsappDigits}?text=Hello%20SW%20Institute!%20I%20want%20to%20enquire%20about%20courses.`}
                   target="_blank"
                   rel="noreferrer"
                   className="p-3.5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366] hover:text-black transition-all flex items-center gap-3 group"
@@ -380,23 +397,24 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ content, onOpenE
           {/* Column 3: Interactive Google Maps Embed Frame */}
           <div className="lg:col-span-3 relative min-h-[380px] rounded-3xl overflow-hidden border-4 border-white shadow-2xl bg-neutral-100 group">
             <iframe
-              title="SW Institute Bhilai Map Location"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.123456789!2d81.332308!3d21.216391!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28cddddddddddd%3A0x0!2sGurunanak+Market%2C+Vaishali+Nagar%2C+Bhilai%2C+Chhattisgarh!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+              key={safeMapEmbedUrl}
+              title={`SW Institute ${mapLabel} Map Location`}
+              src={safeMapEmbedUrl}
               width="100%"
               height="100%"
               style={{ border: 0 }}
-              allowFullScreen={false}
+              allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="w-full h-full min-h-[380px]"
             />
             <div className="absolute bottom-4 left-4 right-4 p-3 rounded-2xl bg-white/90 backdrop-blur-md border border-neutral-200 shadow-md flex items-center justify-between text-[11px]">
-              <span className="font-bold text-[#0B0B0D] uppercase">BHILAI CAMPUS</span>
+              <span className="font-bold text-[#0B0B0D] uppercase truncate pr-2">{mapLabel}</span>
               <a
-                href="https://maps.google.com/?q=Gurunanak+Market+Vaishali+Nagar+Bhilai"
+                href={safeMapLink}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[#F20D63] font-mono hover:underline font-black"
+                className="text-[#F20D63] font-mono hover:underline font-black shrink-0"
               >
                 MAPS ↗
               </a>

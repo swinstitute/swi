@@ -1,5 +1,6 @@
 import { Course, GalleryItem, Enquiry, SiteContent, SectionConfig, ColorTheme } from './types';
 import { saveContentToFirebase, saveEnquiryToFirebase } from './firebase';
+import { sanitizeMapEmbedUrl, sanitizeMapLinkUrl } from './map-utils';
 
 export const COLOR_THEME_PRESETS: Record<ColorTheme['preset'], ColorTheme> = {
   signature: {
@@ -322,6 +323,8 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
   contactWhatsapp: '+91 77729 92592',
   contactEmail: 'swinstitute.in@gmail.com',
   contactAddress: 'Beside Panch Mandir, Near Friends Cafe, Gurunanak Market, Vaishali Nagar, Bhilai, Chhattisgarh',
+  contactMapQuery: 'Gurunanak Market, Vaishali Nagar, Bhilai, Chhattisgarh',
+  contactMapLabel: 'BHILAI CAMPUS',
   contactMapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.123456789!2d81.332308!3d21.216391!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28cddddddddddd%3A0x0!2sGurunanak+Market%2C+Vaishali+Nagar%2C+Bhilai%2C+Chhattisgarh!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin',
   contactMapLink: 'https://maps.google.com/?q=Gurunanak+Market+Vaishali+Nagar+Bhilai',
   admissionsOpen: true,
@@ -582,6 +585,22 @@ export const sanitizeSiteContent = (raw: Partial<SiteContent> | null | undefined
       Array.isArray(parsed.sectionOrder) && parsed.sectionOrder.length > 0
         ? parsed.sectionOrder
         : INITIAL_SECTIONS,
+    contactMapQuery:
+      typeof parsed.contactMapQuery === 'string' && parsed.contactMapQuery.trim()
+        ? parsed.contactMapQuery.trim()
+        : INITIAL_SITE_CONTENT.contactMapQuery,
+    contactMapLabel:
+      typeof parsed.contactMapLabel === 'string' && parsed.contactMapLabel.trim()
+        ? parsed.contactMapLabel.trim()
+        : INITIAL_SITE_CONTENT.contactMapLabel || 'BHILAI CAMPUS',
+    contactMapEmbedUrl: sanitizeMapEmbedUrl(
+      parsed.contactMapEmbedUrl,
+      INITIAL_SITE_CONTENT.contactMapEmbedUrl || ''
+    ),
+    contactMapLink: sanitizeMapLinkUrl(
+      parsed.contactMapLink,
+      INITIAL_SITE_CONTENT.contactMapLink || ''
+    ),
   };
 
   if (Array.isArray(parsed.courses) && parsed.courses.length > 0) {

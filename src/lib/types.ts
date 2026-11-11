@@ -207,6 +207,8 @@ export interface SiteContent {
   contactWhatsapp: string;
   contactEmail: string;
   contactAddress: string;
+  contactMapQuery?: string;
+  contactMapLabel?: string;
   contactMapEmbedUrl?: string;
   contactMapLink?: string;
   admissionsOpen: boolean;

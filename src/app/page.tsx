@@ -70,10 +70,18 @@ export default function Home() {
       }
     }, INITIAL_SITE_CONTENT.firebaseConfig);
 
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === 'sw_site_content' || e.key === 'sw_courses' || e.key === 'sw_gallery') {
+        refreshStore();
+      }
+    };
+
     window.addEventListener('sw_cms_updated', refreshStore);
+    window.addEventListener('storage', handleStorage);
 
     return () => {
       window.removeEventListener('sw_cms_updated', refreshStore);
+      window.removeEventListener('storage', handleStorage);
       if (unsubscribeFirebase) unsubscribeFirebase();
     };
   }, []);
